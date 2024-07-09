@@ -5,7 +5,7 @@
   <version>0.1.0</version>
   <description>Implements Various Pointcloud Filtering Services</description>
   <maintainer email="example@example.com">Umass HRI Lab/Nerve Center Staff</maintainer>
-  <license>Philipp Schillinger BSD License</license>
+  <license>TODO</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
