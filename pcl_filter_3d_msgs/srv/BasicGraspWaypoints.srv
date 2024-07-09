@@ -1,3 +1,3 @@
 geometry_msgs/Point32 position
 ---
-robot_common_3d_msgs/GraspPoses grasp_poses
+pcl_filter_3d_msgs/GraspPoses grasp_poses

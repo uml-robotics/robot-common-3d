@@ -1,0 +1,23 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/christian/Desktop/armada_behaviors_port/install/armada_utility_msgs/include/**",
+        "/opt/ros/humble/include/**",
+        "/home/christian/Desktop/armada_behaviors_port/src/armada_utilities/include/**",
+        "/home/christian/Desktop/armada_behaviors_port/src/armada_utility_msgs/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
