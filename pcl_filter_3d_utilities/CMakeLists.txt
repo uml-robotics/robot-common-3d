@@ -21,14 +21,6 @@ find_package(moveit_ros_planning_interface REQUIRED)
 find_package(moveit_msgs REQUIRED)
 
 # build all files
-set(PCL_DEPENDENCIES
-  rclcpp sensor_msgs pcl_conversions pcl_filter_3d_msgs pcl_ros
-)
-
-set(COLLIDER_DEPS
-  rclcpp rcl_interfaces moveit_ros_planning_interface moveit_msgs geometry_msgs pcl_filter_3d_msgs
-)
-
 add_library(${PROJECT_NAME} INTERFACE)
 
 target_include_directories(${PROJECT_NAME} INTERFACE
@@ -38,7 +30,7 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 
 add_executable(pcl_voxel_grid_filter_service src/pcl_voxel_grid_filter_service.cpp)
 
-ament_target_dependencies(pcl_voxel_grid_filter_service ${PCL_DEPENDENCIES})
+ament_target_dependencies(pcl_voxel_grid_filter_service rclcpp sensor_msgs pcl_conversions pcl_filter_3d_msgs pcl_ros)
 
 
 install(TARGETS ${PROJECT_NAME}
