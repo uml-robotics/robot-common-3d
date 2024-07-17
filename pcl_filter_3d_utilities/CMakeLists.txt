@@ -36,27 +36,9 @@ target_include_directories(${PROJECT_NAME} INTERFACE
   "$<INSTALL_INTERFACE:include>"
 )
 
-# add_executable(get_pointcloud_service src/service/get_pointcloud_service.cpp)
-# add_executable(pcl_concatenate_pointcloud_service src/service/pcl_concatenate_pointcloud_service.cpp)
-# add_executable(pcl_conditional_outlier_removal_service src/service/pcl_conditional_outlier_removal_service.cpp)
-# add_executable(pcl_euclidean_cluster_extraction_service src/service/pcl_euclidean_cluster_extraction_service.cpp)
-# add_executable(pcl_passthrough_filter_service src/service/pcl_passthrough_filter_service.cpp)
-# add_executable(pcl_plane_segmentation_service src/service/pcl_plane_segmentation_service.cpp)
-# add_executable(pcl_radius_outlier_removal_service src/service/pcl_radius_outlier_removal_service.cpp)
-# add_executable(pcl_statistical_outlier_removal_service src/service/pcl_statistical_outlier_removal_service.cpp)
 add_executable(pcl_voxel_grid_filter_service src/pcl_voxel_grid_filter_service.cpp)
-# add_executable(spawn_table_collision_service src/service/spawn_table_collision_service.cpp)
 
-# ament_target_dependencies(get_pointcloud_service ${PCL_DEPENDENCIES} geometry_msgs pcl_ros tf2_geometry_msgs)
-# ament_target_dependencies(pcl_concatenate_pointcloud_service ${PCL_DEPENDENCIES})
-# ament_target_dependencies(pcl_conditional_outlier_removal_service ${PCL_DEPENDENCIES})
-# ament_target_dependencies(pcl_euclidean_cluster_extraction_service ${PCL_DEPENDENCIES})
-# ament_target_dependencies(pcl_passthrough_filter_service ${PCL_DEPENDENCIES})
-# ament_target_dependencies(pcl_plane_segmentation_service ${PCL_DEPENDENCIES} pcl_ros)
-# ament_target_dependencies(pcl_radius_outlier_removal_service ${PCL_DEPENDENCIES})
-# ament_target_dependencies(pcl_statistical_outlier_removal_service ${PCL_DEPENDENCIES})
 ament_target_dependencies(pcl_voxel_grid_filter_service ${PCL_DEPENDENCIES})
-# ament_target_dependencies(spawn_table_collision_service ${COLLIDER_DEPS})
 
 
 install(TARGETS ${PROJECT_NAME}
