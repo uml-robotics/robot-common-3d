@@ -62,6 +62,7 @@ public:
   {
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+
     fromROSMsg(req->cloud_in, *input_cloud);
 
     get_parameter(g_PARAM_NAMESPACE + "leaf_size_x", leaf_size_x_);
@@ -74,6 +75,7 @@ public:
     vox.filter(*filtered_cloud);
 
     toROSMsg(*filtered_cloud, res->cloud_out);
+
     return true;
   }
 };
