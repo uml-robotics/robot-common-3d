@@ -11,7 +11,7 @@
  * Output: sensor_msgs/PointCloud2
  *
  * Usage:
- *  ros2 launch pcl_utilities voxel_grid_filter.xml
+ *    `ros2 launch pcl_utilities voxel_grid_filter.xml`
  */
 
 #include <pcl/filters/voxel_grid.h>
