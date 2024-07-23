@@ -1,8 +1,10 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-#include <functional>
-#include <memory>
+#include <functional> // std::bind, std::placeholders
+#include <memory> // std::shared_ptr, std::make_shared
+#include <string>
+
 #include <rclcpp/node.hpp>
 #include <rclcpp/service.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>

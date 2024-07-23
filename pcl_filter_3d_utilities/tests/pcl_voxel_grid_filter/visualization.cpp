@@ -1,11 +1,9 @@
 #include <string>
-#include <functional>
-#include <limits>
+#include <functional> // std::bind, std::placeholders
 #include <future>
-#include <cassert>
-#include <memory>
-#include <sstream>
-#include <ios>
+#include <memory> // std::shared_ptr, std::make_shared
+#include <sstream> // std::stringstream
+#include <ios> // std::fixed, std::set_percision
 
 #include <rclcpp/node.hpp>
 #include <rclcpp/callback_group.hpp>
@@ -21,7 +19,6 @@
 
 using pcl_filter_3d_msgs::srv::PCLVoxelGridFilter;
 using sensor_msgs::msg::PointCloud2;
-const std::string g_PARAM_NAMESPACE{"filters.voxel_grid."};
 
 class VoxelFilterServiceTestNode: public rclcpp::Node
 {
@@ -43,9 +40,6 @@ public:
     output_publisher_ = create_publisher<PointCloud2>("visualization_voxel_grid_filter", 1);
 
     // establish callback last to avoid race conditions
-    auto camera_callback = std::bind(
-      &VoxelFilterServiceTestNode::camera_subscription_callback,
-      this, std::placeholders::_1);
 
     // ros2 implicitely calls a callback when retrieving the result
     // so the subscriber needs to be in a Re-entrant callback group
@@ -54,6 +48,10 @@ public:
     subscriber_options_ = rclcpp::SubscriptionOptions();
     subscriber_options_.callback_group = create_callback_group(
       rclcpp::CallbackGroupType::Reentrant);
+
+    auto camera_callback = std::bind(
+      &VoxelFilterServiceTestNode::camera_subscription_callback,
+      this, std::placeholders::_1);
 
     camera_subscription_ = create_subscription<PointCloud2>(
       camera_topic_, 1, camera_callback, subscriber_options_);
