@@ -31,8 +31,8 @@ target_include_directories(${PROJECT_NAME} INTERFACE
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include>")
 
-add_executable(pcl_voxel_grid_filter_service src/pcl_voxel_grid_filter_service.cpp)
-ament_target_dependencies(pcl_voxel_grid_filter_service ${THIS_PACKAGE_DEPS})
+add_executable(voxel_grid_filter_service src/voxel_grid_filter_service.cpp)
+ament_target_dependencies(voxel_grid_filter_service ${THIS_PACKAGE_DEPS})
 
 if(BUILD_TESTING)
   # All testing and visualization files are not produced if not in
@@ -46,10 +46,10 @@ if(BUILD_TESTING)
     pcl_utility_msgs
   )
 
-  add_executable(visualizer_pcl_voxel_grid_filter_service tests/pcl_voxel_grid_filter/visualization.cpp)
-  ament_target_dependencies(visualizer_pcl_voxel_grid_filter_service ${THIS_PACKAGE_TEST_DEPS})
+  add_executable(simple_test_voxel_grid_filter tests/simple_test_voxel_grid_filter.cpp)
+  ament_target_dependencies(simple_test_voxel_grid_filter ${THIS_PACKAGE_TEST_DEPS})
 
-  install(TARGETS visualizer_pcl_voxel_grid_filter_service
+  install(TARGETS simple_test_voxel_grid_filter
     EXPORT "export_${PROJECT_NAME}"
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
@@ -80,7 +80,7 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-install(TARGETS pcl_voxel_grid_filter_service
+install(TARGETS voxel_grid_filter_service
   EXPORT "export_${PROJECT_NAME}"
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib

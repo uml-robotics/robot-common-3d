@@ -30,7 +30,7 @@ public:
    * Constructor for VoxelGridFilterService class.
    */
   VoxelGridFilterService()
-  : rclcpp::Node("voxel_grid_filter_service")
+  : rclcpp::Node("voxel_grid_filter")
   {
 
     // declare all parameters above service to avoid race condition with the service
@@ -44,7 +44,7 @@ public:
       &VoxelGridFilterService::voxel_grid_filter, this, std::placeholders::_1,
       std::placeholders::_2);
 
-    voxel_grid_filter_service_ = create_service<PCLVoxelGridFilter>("voxelgrid_filter", callback);
+    voxel_grid_filter_service_ = create_service<PCLVoxelGridFilter>("voxel_grid_filter", callback);
   }
 
   /**

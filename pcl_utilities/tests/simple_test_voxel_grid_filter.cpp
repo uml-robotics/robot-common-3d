@@ -20,24 +20,24 @@
 using pcl_utility_msgs::srv::PCLVoxelGridFilter;
 using sensor_msgs::msg::PointCloud2;
 
-class VoxelFilterServiceTestNode: public rclcpp::Node
+class TestVoxelFilterServiceNode: public rclcpp::Node
 {
 private:
-    rclcpp::Client<PCLVoxelGridFilter>::SharedPtr voxelgrid_filter_client_;
+    rclcpp::Client<PCLVoxelGridFilter>::SharedPtr voxel_grid_filter_client_;
     rclcpp::Subscription<PointCloud2>::SharedPtr camera_subscription_;
     rclcpp::Publisher<PointCloud2>::SharedPtr output_publisher_;
-    std::string camera_topic_;
     rclcpp::SubscriptionOptions subscriber_options_;
 
 public:
-  VoxelFilterServiceTestNode(): rclcpp::Node("voxel_filter_service_visualizer_node")
+  TestVoxelFilterServiceNode(): rclcpp::Node("voxel_filter_service_visualizer_node")
   {
-    camera_topic_ = declare_parameter<std::string>("pointcloud_topic");
+    std::string camera_topic = declare_parameter<std::string>("point_cloud_topic");
+    std::string client_topic = declare_parameter<std::string>("node_client_name");
 
-    voxelgrid_filter_client_ = create_client<PCLVoxelGridFilter>(
-        "voxelgrid_filter");
+    voxel_grid_filter_client_ = create_client<PCLVoxelGridFilter>(client_topic);
 
-    output_publisher_ = create_publisher<PointCloud2>("visualization_voxel_grid_filter", 1);
+    output_publisher_ = create_publisher<PointCloud2>(
+      "voxel_grid_filter/cloud_filtered", 1);
 
     // establish callback last to avoid race conditions
 
@@ -50,11 +50,11 @@ public:
       rclcpp::CallbackGroupType::Reentrant);
 
     auto camera_callback = std::bind(
-      &VoxelFilterServiceTestNode::camera_subscription_callback,
+      &TestVoxelFilterServiceNode::camera_subscription_callback,
       this, std::placeholders::_1);
 
     camera_subscription_ = create_subscription<PointCloud2>(
-      camera_topic_, 1, camera_callback, subscriber_options_);
+      camera_topic, 1, camera_callback, subscriber_options_);
   }
 
   void camera_subscription_callback(PointCloud2::SharedPtr point_cloud) {
@@ -66,7 +66,7 @@ public:
     request->cloud_in = std::move(*point_cloud);
 
     auto response_future =
-      voxelgrid_filter_client_->async_send_request(request);
+      voxel_grid_filter_client_->async_send_request(request);
 
     // retreve time to preserve appromate time message was sent
     // to format any test failures.
@@ -108,7 +108,7 @@ int main(int argc, char ** argv) {
   rclcpp::init(argc, argv);
   rclcpp::executors::MultiThreadedExecutor executor;
 
-  auto node = std::make_shared<VoxelFilterServiceTestNode>();
+  auto node = std::make_shared<TestVoxelFilterServiceNode>();
   executor.add_node(node);
 
   executor.spin();

@@ -1,0 +1,36 @@
+<launch>
+    <!--
+        Pointcloud is published to the topic: robot_common_3d/pcl_utilities/voxel_grid_filter/cloud_filtered
+
+        Must launch camera with depth output enabled before this node and
+        specify the ros arg `-\-ros-args point_cloud_topic:=<topic>`
+        example:
+
+        ```
+        ros2 launch realsense2_camera rs_launch.py depth_module.depth_profile:=1280x720x30 pointcloud.enable:=true
+
+        ros2 launch pcl_utilities test_voxel_grid_filter.xml point_cloud_topic:=/camera/camera/depth/color/points
+        ```
+    -->
+
+    <arg name="point_cloud_topic" />
+    <node
+        pkg="pcl_utilities"
+        exec="voxel_grid_filter_service"
+        name="voxel_grid_filter"
+        namespace="robot_common_3d/pcl_utilities"
+    >
+        <param name="filters.voxel_grid.leaf_size_x" value="0.05" />
+        <param name="filters.voxel_grid.leaf_size_y" value="0.05" />
+        <param name="filters.voxel_grid.leaf_size_z" value="0.05" />
+    </node>
+    <node
+        pkg="pcl_utilities"
+        exec="simple_test_voxel_grid_filter"
+        name="simple_test_voxel_grid_filter"
+        namespace="/tests/robot_common_3d/pcl_utilities"
+    >
+        <param name="node_client_name" value="/robot_common_3d/pcl_utilities/voxel_grid_filter" />
+        <param name="point_cloud_topic" value="$(var point_cloud_topic)" />
+    </node>
+</launch>
