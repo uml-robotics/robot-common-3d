@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
 project(pcl_filter_3d_utilities)
-#set(PROJECT_NAME pcl_filter_3d_utilities)
-
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -18,6 +16,14 @@ find_package(pcl_filter_3d_msgs REQUIRED)
 find_package(pcl_ros REQUIRED)
 find_package(pcl_conversions REQUIRED)
 
+set(THIS_PACKAGE_DEPS
+  rclcpp
+  sensor_msgs
+  pcl_ros
+  pcl_conversions
+  pcl_filter_3d_msgs
+)
+
 # build all files
 add_library(${PROJECT_NAME} INTERFACE)
 
@@ -26,14 +32,22 @@ target_include_directories(${PROJECT_NAME} INTERFACE
   "$<INSTALL_INTERFACE:include>")
 
 add_executable(pcl_voxel_grid_filter_service src/pcl_voxel_grid_filter_service.cpp)
-ament_target_dependencies(pcl_voxel_grid_filter_service rclcpp sensor_msgs pcl_conversions pcl_filter_3d_msgs pcl_ros)
+ament_target_dependencies(pcl_voxel_grid_filter_service ${THIS_PACKAGE_DEPS})
 
 if(BUILD_TESTING)
   # All testing and visualization files are not produced if not in
   # BUILT_TESTING. Launch files will still exist but will fail to launch nodes
 
+  SET(
+    THIS_PACKAGE_TEST_DEPS
+    rclcpp
+    sensor_msgs
+    pcl_ros
+    pcl_filter_3d_msgs
+  )
+
   add_executable(visualizer_pcl_voxel_grid_filter_service tests/pcl_voxel_grid_filter/visualization.cpp)
-  ament_target_dependencies(visualizer_pcl_voxel_grid_filter_service rclcpp sensor_msgs pcl_ros pcl_filter_3d_msgs)
+  ament_target_dependencies(visualizer_pcl_voxel_grid_filter_service ${THIS_PACKAGE_TEST_DEPS})
 
   install(TARGETS visualizer_pcl_voxel_grid_filter_service
     EXPORT "export_${PROJECT_NAME}"
