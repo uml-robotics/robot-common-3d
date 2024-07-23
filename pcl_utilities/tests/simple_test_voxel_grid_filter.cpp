@@ -29,7 +29,7 @@ private:
     rclcpp::SubscriptionOptions subscriber_options_;
 
 public:
-  TestVoxelFilterServiceNode(): rclcpp::Node("voxel_filter_service_visualizer_node")
+  TestVoxelFilterServiceNode(): rclcpp::Node("simple_test_voxel_grid_filter") 
   {
     std::string camera_topic = declare_parameter<std::string>("point_cloud_topic");
     std::string client_topic = declare_parameter<std::string>("node_client_name");
