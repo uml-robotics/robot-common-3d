@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(pcl_filter_3d_utilities)
+project(pcl_utilities)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -12,7 +12,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(pcl_filter_3d_msgs REQUIRED)
+find_package(pcl_utility_msgs REQUIRED)
 find_package(pcl_ros REQUIRED)
 find_package(pcl_conversions REQUIRED)
 
@@ -21,7 +21,7 @@ set(THIS_PACKAGE_DEPS
   sensor_msgs
   pcl_ros
   pcl_conversions
-  pcl_filter_3d_msgs
+  pcl_utility_msgs
 )
 
 # build all files
@@ -43,7 +43,7 @@ if(BUILD_TESTING)
     rclcpp
     sensor_msgs
     pcl_ros
-    pcl_filter_3d_msgs
+    pcl_utility_msgs
   )
 
   add_executable(visualizer_pcl_voxel_grid_filter_service tests/pcl_voxel_grid_filter/visualization.cpp)

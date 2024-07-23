@@ -15,9 +15,9 @@
 #include <rclcpp/logger.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-#include <pcl_filter_3d_msgs/srv/pcl_voxel_grid_filter.hpp>
+#include <pcl_utility_msgs/srv/pcl_voxel_grid_filter.hpp>
 
-using pcl_filter_3d_msgs::srv::PCLVoxelGridFilter;
+using pcl_utility_msgs::srv::PCLVoxelGridFilter;
 using sensor_msgs::msg::PointCloud2;
 
 class VoxelFilterServiceTestNode: public rclcpp::Node
