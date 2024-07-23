@@ -1,3 +1,0 @@
-geometry_msgs/Point32 position
----
-pcl_filter_3d_msgs/GraspPoses grasp_poses

@@ -28,17 +28,7 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "srv/BasicGraspWaypoints.srv"
-  "srv/GetPointCloud.srv"
-  "srv/PCLConcatenatePointCloud.srv"
-  "srv/PCLConditionalOutlierRemoval.srv"
-  "srv/PCLEuclideanClusterExtraction.srv"
-  "srv/PCLPassthroughFilter.srv"
-  "srv/PCLPlaneSegmentation.srv"
-  "srv/PCLRadiusOutlierRemoval.srv"
-  "srv/PCLStatisticalOutlierRemoval.srv"
   "srv/PCLVoxelGridFilter.srv"
-  "srv/SpawnTableCollision.srv"
   DEPENDENCIES std_msgs sensor_msgs geometry_msgs
 )
 
