@@ -1,3 +1,19 @@
+/*
+ * Author: Brian Flynn
+ * Date: Nov 15, 2022
+ * Editors: Christian Tagliamonte
+ * Last Modified: July 23, 2024
+ * Adapted from: https://github.com/uml-robotics/armada_behaviors/blob/main/armada_flexbe_utilities/src/service/pcl_voxel_grid_filter_service.cpp
+ *
+ * Description: Starts up a service for a PCL voxel grid filtering.
+ *
+ * Input: sensor_msgs/PointCloud2
+ * Output: sensor_msgs/PointCloud2
+ *
+ * Usage:
+ *  ros2 launch pcl_utilities voxel_grid_filter.xml
+ */
+
 #include <pcl/filters/voxel_grid.h>
 #include <pcl_conversions/pcl_conversions.h>
 

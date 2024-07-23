@@ -1,3 +1,16 @@
+/*
+ * Author: Christian Tagliamonte
+ * Date: July 23, 2024
+ * Editors: N/A
+ * Last Modified: July 23, 2024
+ *
+ * Description: A node to test the voxel_grid_service. This node listens to a
+ *    point cloud topic parameter, `point_cloud_topic`, calls the service,
+ *    then outputs the output point cloud to `voxel_grid_filter/cloud_filtered`
+ *
+ * Usage:
+ *    `ros2 launch pcl_utilities test_voxel_grid_filter.xml point_cloud_topic:=<POINT_CLOUD_TOPIC>`
+ */
 #include <string>
 #include <functional> // std::bind, std::placeholders
 #include <future>
@@ -68,7 +81,7 @@ public:
     auto response_future =
       voxel_grid_filter_client_->async_send_request(request);
 
-    // retreve time to preserve appromate time message was sent
+    // retreve time to preserve approximate time message was sent
     // to format any test failures.
     double current_time = get_clock()->now().seconds();
 
