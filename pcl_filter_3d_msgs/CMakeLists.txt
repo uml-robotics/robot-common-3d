@@ -28,8 +28,6 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/GraspPosesList.msg"
-  "msg/GraspPoses.msg"
   "srv/BasicGraspWaypoints.srv"
   "srv/GetPointCloud.srv"
   "srv/PCLConcatenatePointCloud.srv"
