@@ -3,8 +3,8 @@
 <package format="3">
   <name>pcl_utility_msgs</name>
   <version>1.0.0</version>
-  <description>Defines Service Files Needed for pcl_filter_3d_utilities</description>
-  <maintainer email="example@example.com">UMass Lowell HRI Lab/NERVE Center</maintainer>
+  <description>Defines Service Files Needed for pcl_utilities</description>
+  <maintainer>UMass Lowell HRI Lab/NERVE Center</maintainer>
   <license>TODO</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
