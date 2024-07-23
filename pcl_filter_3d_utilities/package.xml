@@ -4,7 +4,7 @@
   <name>pcl_filter_3d_utilities</name>
   <version>0.1.0</version>
   <description>Implements Various Pointcloud Filtering Services</description>
-  <maintainer email="example@example.com">Umass HRI Lab/Nerve Center Staff</maintainer>
+  <maintainer email="example@example.com">UMass Lowell HRI Lab/NERVE Center</maintainer>
   <license>TODO</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
