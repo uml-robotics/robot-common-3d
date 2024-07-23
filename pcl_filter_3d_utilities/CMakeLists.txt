@@ -17,10 +17,6 @@ find_package(sensor_msgs REQUIRED)
 find_package(pcl_filter_3d_msgs REQUIRED)
 find_package(pcl_ros REQUIRED)
 find_package(pcl_conversions REQUIRED)
-find_package(geometry_msgs REQUIRED)
-find_package(tf2_geometry_msgs REQUIRED)
-find_package(moveit_ros_planning_interface REQUIRED)
-find_package(moveit_msgs REQUIRED)
 
 # build all files
 add_library(${PROJECT_NAME} INTERFACE)
@@ -66,10 +62,6 @@ if(BUILD_TESTING)
   # comment the line when this package is in a git repo and when
   # a copyright and license is added to all source files
   set(ament_cmake_cpplint_FOUND TRUE)
-
-  # file(GLOB AMENT_LINT_AUTO_FILE_EXCLUDE_
-  #   build/* install/* log/*
-  # )
 
   ament_lint_auto_find_test_dependencies()
 endif()
