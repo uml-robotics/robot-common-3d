@@ -31,6 +31,21 @@
 using pcl_utility_msgs::srv::PCLVoxelGridFilter;
 const std::string g_PARAM_NAMESPACE{"filters.voxel_grid."};
 
+/*
+TODO: Check that the leaf size is large enough for the number of points.
+      Unit test will pass when the
+PCL Error:
+  `Leaf size is too small for the input dataset. Integer indices would overflow.`
+
+Test Failure:
+  ```
+  [simple_test_voxel_grid_filter-2] [ERROR] [1721769013.741232423] [tests.robot_common_3d.pcl_utilities.simple_test_voxel_grid_filter]: Sample at time: 1721769013.7074
+  produces a pointcloud with more points than the input.
+  ```
+The custom test fails only when PCL produces an error message.
+The output cloud is likely being padded with more points in this case,
+causing the number of output clouds be greater than the input cloud.
+*/
 class VoxelGridFilterService : public rclcpp::Node
 {
 protected:
