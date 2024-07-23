@@ -1,6 +1,6 @@
 <launch>
     <!--
-        Pointcloud is published to the topic: robot_common_3d/pcl_utilities/voxel_grid_filter/cloud_filtered
+        Pointcloud is published to the topic: tests/robot_common_3d/pcl_utilities/voxel_grid_filter/cloud_filtered
 
         Must launch camera with depth output enabled before this node and
         specify the ros arg `-\-ros-args point_cloud_topic:=<topic>`
