@@ -3,7 +3,7 @@
 <package format="3">
   <name>pcl_utilities</name>
   <version>0.1.0</version>
-  <description>Implements Various Pointcloud Filtering Services</description>
+  <description>Implements Various Pointcloud Processing Services</description>
   <maintainer email="Christian_Tagliamonte@student.uml.edu">Christian Tagliamonte</maintainer>
   <license>TODO</license>
 

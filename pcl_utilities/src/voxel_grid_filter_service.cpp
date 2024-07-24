@@ -61,7 +61,7 @@ public:
    * Constructor for VoxelGridFilterService class.
    */
   VoxelGridFilterService()
-  : rclcpp::Node("voxel_grid_filter")
+  : rclcpp::Node("voxel_grid_filter_service")
   {
 
     // declare all parameters above service to avoid race condition with the service
