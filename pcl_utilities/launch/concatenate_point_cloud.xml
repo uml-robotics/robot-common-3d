@@ -1,0 +1,8 @@
+<launch>
+    <node
+        pkg="pcl_utilities"
+        exec="concatenate_point_cloud_service"
+        name="concatenate_point_cloud"
+        namespace="robot_common_3d/pcl_utilities"
+    />
+</launch>
