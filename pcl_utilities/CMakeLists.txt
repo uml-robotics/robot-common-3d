@@ -6,10 +6,23 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic) # -Werror
+  # disable the error message associated with VLAs for now until changed
+  add_compile_options(-Wall -Wextra -Wpedantic -Wno-vla) # -Werror
 endif()
 
-# find dependencies
+# PCL may fail to link with certain enviorments where
+# `PCL_ROOT` becomes set to '/'.
+# See: https://github.com/PointCloudLibrary/pcl/issues/4661
+#
+# If PCL is not found:
+# - check if PCL is installed
+# - check PCL_ROOT is not '/' with: `variable_watch(PCL_ROOT)`
+#
+# Fix by setting PCL_DIR to the path of the PCL cmake file:
+# set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
+
+set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
+find_package(PCL REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(pcl_utility_msgs REQUIRED)
@@ -22,7 +35,12 @@ set(THIS_PACKAGE_DEPS
   pcl_ros
   pcl_conversions
   pcl_utility_msgs
+  PCL
 )
+
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 # build all files
 add_library(${PROJECT_NAME} INTERFACE)
@@ -66,10 +84,10 @@ if(BUILD_TESTING)
   )
 
   add_executable(simple_test_voxel_grid_filter tests/simple_test_voxel_grid_filter.cpp)
-  add_executable(simple_test_concatenate_point_cloud tests/simple_test_concatenate_point_cloud)
+  add_executable(simple_test_concatenate_point_cloud tests/simple_test_concatenate_point_cloud.cpp)
 
   ament_target_dependencies(simple_test_voxel_grid_filter ${THIS_PACKAGE_TEST_DEPS})
-  ament_target_dependencies(simple_test_concatenate_point_cloud ${THIS_PACKAGE_DEPS})
+  ament_target_dependencies(simple_test_concatenate_point_cloud ${THIS_PACKAGE_TEST_DEPS})
 
   list(APPEND THIS_PACKAGE_EXECS
     simple_test_voxel_grid_filter
