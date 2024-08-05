@@ -47,7 +47,7 @@ private:
     rclcpp::Publisher<PointCloud2>::SharedPtr output_publisher_;
     rclcpp::SubscriptionOptions subscriber_options_;
     std::deque<PointCloud2> history_;
-    size_t num_point_clouds_;
+    std::size_t num_point_clouds_;
 
 public:
   TestConcatenatePointCloudNode(): rclcpp::Node("simple_test_concatenate_point_cloud")
@@ -57,7 +57,7 @@ public:
 
     int64_t num_messages {declare_parameter<int64_t>("num_point_clouds")};
     num_messages = std::clamp(num_messages, int64_t{0}, int64_t{INT_MAX});
-    num_point_clouds_ = static_cast<size_t>(num_messages);
+    num_point_clouds_ = static_cast<std::size_t>(num_messages);
 
     concatenate_point_cloud_filter_client_ = create_client<PCLConcatenatePointCloud>
       (client_topic);
@@ -120,7 +120,7 @@ public:
     //    - the size of cloud_out must be less than the size of the
     //      cloud_in.
 
-    size_t max_point_cloud_size = 0U;
+    std::size_t max_point_cloud_size = 0U;
     for (const auto& point_cloud : history_) {
         max_point_cloud_size = std::max(max_point_cloud_size, point_cloud.data.size());
     }

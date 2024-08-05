@@ -46,7 +46,7 @@ bool concatenate_point_cloud(
     const rclcpp::Logger & node_logger,
     PCLConcatenatePointCloud::Request::SharedPtr req,
     PCLConcatenatePointCloud::Response::SharedPtr res) {
-  size_t cloud_list_size = req->cloud_list_in.size();
+  unsigned int cloud_list_size = static_cast<unsigned int>(req->cloud_list_in.size());
 
   // make sure the number of point clouds can safely
   // fit in stack memory
@@ -60,7 +60,7 @@ bool concatenate_point_cloud(
   // header.frame_id must be managed separately since PCL::PointCloud
   // does not track frame_id
   std::string frame_id;
-  for (size_t i = 0; i < req->cloud_list_in.size(); i++) {
+  for (unsigned int i = 0; i < cloud_list_size; i++) {
     const std::string current_frame_id = req->cloud_list_in[i].header.frame_id;
 
     if (frame_id == "") {
@@ -82,12 +82,12 @@ bool concatenate_point_cloud(
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr concatenated_cloud(
       new pcl::PointCloud<pcl::PointXYZRGB>);
 
-  for (size_t i = 0; i < cloud_list_size; ++i) {
+  for (unsigned int i = 0; i < cloud_list_size; ++i) {
     fromROSMsg(req->cloud_list_in[i], input_cloud);
     cloud_array[i] = input_cloud;
   }
 
-  for (size_t i = 0; i < cloud_list_size; i++) {
+  for (unsigned int i = 0; i < cloud_list_size; i++) {
     // PointCloud::operator+= manages is_dense and timestamp feilds
     // internally
     *concatenated_cloud += cloud_array[i];
