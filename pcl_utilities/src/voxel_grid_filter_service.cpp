@@ -2,7 +2,7 @@
  * Author: Brian Flynn
  * Date: Nov 15, 2022
  * Editors: Christian Tagliamonte
- * Last Modified: July 23, 2024
+ * Last Modified: Aug 5, 2024
  * Adapted from: https://github.com/uml-robotics/armada_behaviors/blob/main/armada_flexbe_utilities/src/service/pcl_voxel_grid_filter_service.cpp
  *
  * Description: Starts up a service for a PCL voxel grid filtering.
@@ -14,19 +14,18 @@
  *    `ros2 launch pcl_utilities voxel_grid_filter.xml`
  */
 
-#include <pcl/filters/voxel_grid.h>
-#include <pcl_conversions/pcl_conversions.h>
-
 #include <functional> // std::bind, std::placeholders
-#include <memory> // std::shared_ptr, std::make_shared
+#include <memory> // std::make_shared
 #include <string>
 
 #include <rclcpp/node.hpp>
 #include <rclcpp/service.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <string>
 
-#include "pcl_utility_msgs/srv/pcl_voxel_grid_filter.hpp"
+#include <pcl/filters/voxel_grid.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl_utility_msgs/srv/pcl_voxel_grid_filter.hpp>
+
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 using pcl_utility_msgs::srv::PCLVoxelGridFilter;
 const std::string g_PARAM_NAMESPACE{"filters.voxel_grid."};
