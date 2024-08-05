@@ -46,7 +46,7 @@ if(BUILD_TESTING)
     pcl_utility_msgs
   )
 
-  add_executable(simple_test_voxel_grid_filter tests/simple_test_voxel_grid_filter.cpp)
+  add_executable(simple_test_voxel_grid_filter src/tests/simple_test_voxel_grid_filter.cpp)
   ament_target_dependencies(simple_test_voxel_grid_filter ${THIS_PACKAGE_TEST_DEPS})
 
   install(TARGETS simple_test_voxel_grid_filter
