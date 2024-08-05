@@ -19,7 +19,7 @@ endif()
 # - check PCL_ROOT is not '/' with: `variable_watch(PCL_ROOT)`
 #
 # Fix by setting PCL_DIR to the path of the PCL cmake file:
-set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
+# set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
 
 find_package(PCL REQUIRED)
 find_package(ament_cmake REQUIRED)
