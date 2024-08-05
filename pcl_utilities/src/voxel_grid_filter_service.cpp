@@ -20,12 +20,11 @@
 
 #include <rclcpp/node.hpp>
 #include <rclcpp/service.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <pcl/filters/voxel_grid.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_utility_msgs/srv/pcl_voxel_grid_filter.hpp>
-
-#include <sensor_msgs/msg/point_cloud2.hpp>
 
 using pcl_utility_msgs::srv::PCLVoxelGridFilter;
 const std::string g_PARAM_NAMESPACE{"filters.voxel_grid."};
