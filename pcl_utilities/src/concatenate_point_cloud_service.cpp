@@ -18,14 +18,14 @@
 #include <pcl/point_cloud.h>  // pcl::PointCloud
 #include <pcl_conversions/pcl_conversions.h>  // std::shared_ptr
 
-#include <cstdint>  //size_t
-#include <memory>
+#include <cstddef>  // size_t
+#include <memory>  // std::make_shared
 #include <utility>  // std::move
 
-#include <pcl/impl/point_types.hpp>  // pcl::PointXYZRGB
+#include <pcl/impl/point_types.hpp>
 #include <pcl_utility_msgs/srv/pcl_concatenate_point_cloud.hpp>
 
-#include <rclcpp/logging.hpp>  // rclcpp::Logger
+#include <rclcpp/logging.hpp>
 #include <rclcpp/node.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -47,6 +47,8 @@ bool concatenate_point_cloud(
     PCLConcatenatePointCloud::Request::SharedPtr req,
     PCLConcatenatePointCloud::Response::SharedPtr res) {
   unsigned int cloud_list_size = static_cast<unsigned int>(req->cloud_list_in.size());
+
+  static_assert(sizeof(pcl::PointCloud<pcl::PointXYZRGB>) != 0);
 
   // make sure the number of point clouds can safely
   // fit in stack memory
