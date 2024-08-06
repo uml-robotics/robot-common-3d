@@ -8,8 +8,22 @@ endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # disable the error message associated with VLAs for now until changed
   add_compile_options(-Wall -Wextra -Wpedantic -Wno-vla) # -Werror
+  # disable the error message associated with VLAs for now until changed
+  add_compile_options(-Wall -Wextra -Wpedantic -Wno-vla) # -Werror
 endif()
 
+# PCL may fail to link with certain environments where
+# `PCL_ROOT` becomes set to '/'.
+# See: https://github.com/PointCloudLibrary/pcl/issues/4661
+#
+# If PCL is not found:
+# - check if PCL is installed
+# - check PCL_ROOT is not '/' with: `variable_watch(PCL_ROOT)`
+#
+# Fix by setting PCL_DIR to the path of the PCL cmake file:
+# set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
+
+find_package(PCL REQUIRED)
 # PCL may fail to link with certain environments where
 # `PCL_ROOT` becomes set to '/'.
 # See: https://github.com/PointCloudLibrary/pcl/issues/4661
@@ -41,12 +55,12 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
 # build all files
 add_library(${PROJECT_NAME} INTERFACE)
-
-target_include_directories(${PROJECT_NAME} INTERFACE
-  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include>")
 
 add_executable(voxel_grid_filter_service src/voxel_grid_filter_service.cpp)
 add_executable(concatenate_point_cloud_service src/concatenate_point_cloud_service.cpp)
@@ -106,19 +120,16 @@ endif()
 
 install(TARGETS
   ${THIS_PACKAGE_EXECS}
+install(TARGETS
+  ${THIS_PACKAGE_EXECS}
   EXPORT "export_${PROJECT_NAME}"
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
-  INCLUDES DESTINATION include
 )
 
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}/
-)
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION include/${PROJECT_NAME}
 )
 
 ament_export_targets("export_${PROJECT_NAME}")
