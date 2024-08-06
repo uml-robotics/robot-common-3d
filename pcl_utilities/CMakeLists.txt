@@ -35,7 +35,6 @@ find_package(PCL REQUIRED)
 # Fix by setting PCL_DIR to the path of the PCL cmake file:
 # set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
 
-find_package(PCL REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(pcl_utility_msgs REQUIRED)
@@ -96,8 +95,8 @@ if(BUILD_TESTING)
     pcl_utility_msgs
   )
 
-  add_executable(simple_test_voxel_grid_filter tests/simple_test_voxel_grid_filter.cpp)
-  add_executable(simple_test_concatenate_point_cloud tests/simple_test_concatenate_point_cloud.cpp)
+  add_executable(simple_test_voxel_grid_filter src/tests/simple_test_voxel_grid_filter.cpp)
+  add_executable(simple_test_concatenate_point_cloud src/tests/simple_test_concatenate_point_cloud.cpp)
 
   ament_target_dependencies(simple_test_voxel_grid_filter ${THIS_PACKAGE_TEST_DEPS})
   ament_target_dependencies(simple_test_concatenate_point_cloud ${THIS_PACKAGE_TEST_DEPS})
@@ -118,8 +117,6 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-install(TARGETS
-  ${THIS_PACKAGE_EXECS}
 install(TARGETS
   ${THIS_PACKAGE_EXECS}
   EXPORT "export_${PROJECT_NAME}"
