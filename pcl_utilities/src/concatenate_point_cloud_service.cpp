@@ -48,8 +48,6 @@ bool concatenate_point_cloud(
     PCLConcatenatePointCloud::Response::SharedPtr res) {
   unsigned int cloud_list_size = static_cast<unsigned int>(req->cloud_list_in.size());
 
-  static_assert(sizeof(pcl::PointCloud<pcl::PointXYZRGB>) != 0);
-
   // make sure the number of point clouds can safely
   // fit in stack memory
   if (cloud_list_size > MAX_POINT_CLOUDS) {
