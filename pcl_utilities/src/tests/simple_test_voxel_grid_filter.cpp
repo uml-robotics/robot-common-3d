@@ -2,7 +2,7 @@
  * Author: Christian Tagliamonte
  * Date: July 23, 2024
  * Editors: Christian Tagliamonte
- * Last Modified: Aug 5, 2024
+ * Last Modified: Aug 7, 2024
  *
  * Description: A node to test the voxel_grid_service. This node listens to a
  *    point cloud topic parameter, `point_cloud_topic`, calls the service,
@@ -12,24 +12,23 @@
  *    `ros2 launch pcl_utilities test_voxel_grid_filter.xml point_cloud_topic:=<POINT_CLOUD_TOPIC>`
  */
 #include <string>
-#include <functional> // std::bind, std::placeholders
+#include <functional>  // std::bind, std::placeholders
 #include <future>
-#include <memory> // std::make_shared
-#include <sstream> // std::stringstream
-#include <ios> // std::fixed, std::setprecision
+#include <memory>  // std::make_shared
+#include <sstream>  // std::stringstream
+#include <ios>  // std::fixed, std::setprecision
 
-#include <rclcpp/node.hpp>
-#include <rclcpp/callback_group.hpp>
-#include <rclcpp/subscription_options.hpp>
-#include <rclcpp/executors.hpp>
-#include <rclcpp/client.hpp>
-#include <rclcpp/publisher.hpp>
-#include <rclcpp/subscription.hpp>
-#include <rclcpp/logger.hpp>
+#include "rclcpp/node.hpp"
+#include "rclcpp/callback_group.hpp"
+#include "rclcpp/subscription_options.hpp"
+#include "rclcpp/executors.hpp"
+#include "rclcpp/client.hpp"
+#include "rclcpp/publisher.hpp"
+#include "rclcpp/subscription.hpp"
+#include "rclcpp/logger.hpp"
+#include "sensor_msgs/msg/point_cloud2.hpp"
 
-#include <sensor_msgs/msg/point_cloud2.hpp>
-
-#include <pcl_utility_msgs/srv/pcl_voxel_grid_filter.hpp>
+#include "pcl_utility_msgs/srv/pcl_voxel_grid_filter.hpp"
 
 using pcl_utility_msgs::srv::PCLVoxelGridFilter;
 using sensor_msgs::msg::PointCloud2;
