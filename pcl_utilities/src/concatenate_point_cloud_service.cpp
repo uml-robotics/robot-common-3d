@@ -15,22 +15,24 @@
  *    `ros2 launch pcl_utilities concatenate_point_cloud.xml`
  */
 
-#include <pcl/point_cloud.h>  // pcl::PointCloud
-#include <pcl_conversions/pcl_conversions.h>  // std::shared_ptr
-
 #include <cstddef>  // size_t
+#include <functional>  // std::bind
+#include <iomanip>  // std::quoted
 #include <memory>  // std::make_shared
+#include <string>
 #include <utility>  // std::move
 
 #include <pcl/impl/point_types.hpp>
+#include <pcl/point_cloud.h>
+
 #include <pcl_utility_msgs/srv/pcl_concatenate_point_cloud.hpp>
+#include <pcl_conversions/pcl_conversions.h>
 
 #include <rclcpp/logging.hpp>
 #include <rclcpp/node.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 using pcl_utility_msgs::srv::PCLConcatenatePointCloud;
-constexpr size_t MAX_POINT_CLOUDS = 400U;
 
 class ConcatenatePointCloudService: public rclcpp::Node {
 private:
@@ -64,6 +66,7 @@ public:
       PCLConcatenatePointCloud::Response::SharedPtr res) {
     // header.frame_id must be managed separately since PCL::PointCloud
     // does not track frame_id
+    // Assert that all input_clouds have the same frame_id
     std::string frame_id;
     for (size_t i = 0; i < req->cloud_list_in.size(); ++i) {
       const std::string current_frame_id =
@@ -80,10 +83,10 @@ public:
         // header.frame_id is not tracked in PCL::PointCloud, must
         // be managed separetely by ROS for concatenation
         RCLCPP_ERROR_STREAM(get_logger(),
-          "The point cloud at index #" << i << "has frame of "
+          "The point cloud at index #" << i << " has a frame_id of "
           << std::quoted(current_frame_id) << "which does not match the "
-          << "required frame id of" << std::quoted(frame_id));
-        return 0;
+          << "required frame_id of " << std::quoted(frame_id));
+        return false;
       }
     }
 

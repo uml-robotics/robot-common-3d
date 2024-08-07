@@ -2,66 +2,82 @@
  * Author: Christian Tagliamonte
  * Date: Aug Aug 4, 2024
  * Editors: N/A
- * Last Modified: Aug 4, 2024
+ * Last Modified: Aug 7, 2024
  *
- * Description: A node to test the concatenate_point_cloud_service. This node listens to a series of sequential pointcloud
- * messages from the topic specified by the parameter, `point_cloud_topic.` Each message is stored within a queue with a
- * size specified by the parameter, `num_point_clouds` (defaults to 5). When the queue is full, all messages in are sent
- * to the `concatenate_point_cloud_service`.
+ * Description: A node to test the concatenate_point_cloud_service.
+ * This node listens to a series of sequential pointcloud
+ *   messages from the topic specified by the parameter, `point_cloud_topic.`
+ * Each message is stored within a queue with a
+ *   size specified by the parameter, `num_point_clouds` (defaults to 5). When
+ *   the queue is full, all messages in are sent
+ *   to the `concatenate_point_cloud_service`.
  *
- * The concatenated point cloud is then published to the topic `concatenate_point_cloud_filter/cloud_concatenated`
+ * The concatenated point cloud is then published to the topic
+ *   `concatenate_point_cloud/cloud_concatenated`
  *
  * Usage:
- *    `ros2 launch pcl_utilities test_concatenate_point_cloud_filter.xml point_cloud_topic:=<POINT_CLOUD_TOPIC>`
+ *    `ros2 launch pcl_utilities test_concatenate_point_cloud.xml point_cloud_topic:=<POINT_CLOUD_TOPIC>`
  */
-#include <algorithm>  // std::clamp
-#include <climits>
-#include <cstdint>  // size_t
+#include <chrono>   // std::chrono::seconds
+#include <cstddef>  // size_t
+#include <cstdint>  // int64_t
 #include <deque>
 #include <functional>  // std::bind, std::placeholders
-#include <future>
-#include <ios>  // std::fixed, std::set_percision
-#include <memory>  // std::shared_ptr, std::make_shared
+#include <ios>  // std::fixed, std::setprecision
+#include <memory>  // std::make_shared
 #include <sstream>  // std::stringstream
 #include <string>
-#include <mutex>
+#include <utility>  // std::move
 
-#include <rclcpp/callback_group.hpp>
-#include <rclcpp/executors.hpp>
-#include <rclcpp/logger.hpp>
-#include <rclcpp/node.hpp>
-#include <rclcpp/publisher.hpp>
-#include <rclcpp/subscription.hpp>
-#include <rclcpp/subscription_options.hpp>
-#include <rclcpp/wait_for_message.hpp>
+#include "rclcpp/executors.hpp"
+#include "rclcpp/logger.hpp"
+#include "rclcpp/logging.hpp"
+#include "rclcpp/node.hpp"
+#include "rclcpp/publisher.hpp"
+#include "rclcpp/subscription.hpp"
+#include "rclcpp/wait_for_message.hpp"
+#include "rcl_interfaces/msg/integer_range.hpp"
+#include "rcl_interfaces/msg/parameter_descriptor.hpp"
 
-#include <pcl_utility_msgs/srv/pcl_concatenate_point_cloud.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
+#include "sensor_msgs/msg/point_cloud2.hpp"
+
+#include "pcl_utility_msgs/srv/pcl_concatenate_point_cloud.hpp"
 
 using pcl_utility_msgs::srv::PCLConcatenatePointCloud;
 using sensor_msgs::msg::PointCloud2;
 
+constexpr size_t MAX_POINT_CLOUDS = 100U;
+constexpr std::chrono::seconds MAX_WAIT_TIME {1U};
+
 class TestConcatenatePointCloudNode: public rclcpp::Node
 {
 private:
-    rclcpp::Client<PCLConcatenatePointCloud>::SharedPtr concatenate_point_cloud_filter_client_;
+    rclcpp::Client<PCLConcatenatePointCloud>::SharedPtr
+      concatenate_point_cloud_client_;
     rclcpp::Publisher<PointCloud2>::SharedPtr output_publisher_;
     std::deque<PointCloud2> history_;
-    std::size_t num_point_clouds_;
     std::string camera_topic_;
+    size_t num_point_clouds_;
 
 public:
-  TestConcatenatePointCloudNode(): rclcpp::Node("simple_test_concatenate_point_cloud")
+  TestConcatenatePointCloudNode()
+  : rclcpp::Node("simple_test_concatenate_point_cloud")
   {
-    camera_topic_ = declare_parameter<std::string>("point_cloud_topic");
     std::string client_topic = declare_parameter<std::string>("node_client_name");
+    camera_topic_ = declare_parameter<std::string>("point_cloud_topic");
 
-    int64_t num_messages = declare_parameter<int64_t>("num_point_clouds");
-    num_messages = std::clamp(num_messages, int64_t{0}, int64_t{INT_MAX});
-    num_point_clouds_ = static_cast<std::size_t>(num_messages);
+    // rclcpp uses int64_t internally, use explicit cast to size_t
+    rcl_interfaces::msg::ParameterDescriptor param_constraints;
+    rcl_interfaces::msg::IntegerRange integer_range;
+    integer_range.from_value = 0U;
+    integer_range.to_value = MAX_POINT_CLOUDS;
+    param_constraints.integer_range.push_back(integer_range);
 
-    concatenate_point_cloud_filter_client_ = create_client<PCLConcatenatePointCloud>
-      (client_topic, rmw_qos_profile_services_default);
+    num_point_clouds_ = static_cast<size_t>(
+      declare_parameter<int64_t>("num_point_clouds", std::move(param_constraints)));
+
+    concatenate_point_cloud_client_ =
+      create_client<PCLConcatenatePointCloud>(client_topic);
 
     output_publisher_ = create_publisher<PointCloud2>(
       "concatenate_point_cloud/cloud_concatenated", 1);
@@ -76,20 +92,20 @@ public:
       PointCloud2 point_cloud_message;
       bool was_retrieved = rclcpp::wait_for_message(
         point_cloud_message, shared_from_this(),
-        camera_topic_, std::chrono::seconds(1));
+        camera_topic_, MAX_WAIT_TIME);
 
       if (!was_retrieved)
       {
         RCLCPP_ERROR(get_logger(),
-          "A camera message could not be retrieved in 1 second.");
+          "A camera message could not be retrieved within 1 second.");
         continue;
       }
 
-      point_cloud_callback(point_cloud_message);
+      process_point_cloud(point_cloud_message);
     }
   }
 
-  void point_cloud_callback(PointCloud2& point_cloud) {
+  void process_point_cloud(PointCloud2& point_cloud) {
     // create a fixed sized context window of old point clouds
     history_.push_back(std::move(point_cloud));
     if (history_.size() > num_point_clouds_)
@@ -104,10 +120,16 @@ public:
     request->cloud_list_in = std::vector(history_.cbegin(), history_.cend());
 
     auto response_future =
-      concatenate_point_cloud_filter_client_->async_send_request(request);
+      concatenate_point_cloud_client_->async_send_request(request);
 
-    rclcpp::spin_until_future_complete(
-      shared_from_this(), response_future);
+    auto response_code = rclcpp::spin_until_future_complete(
+      shared_from_this(), response_future, MAX_WAIT_TIME);
+
+    if (response_code != rclcpp::FutureReturnCode::SUCCESS)
+    {
+      RCLCPP_ERROR(get_logger(), "Failed to recieve a response from the service");
+      return;
+    }
 
     PCLConcatenatePointCloud::Response::SharedPtr response {
       response_future.get()};
@@ -129,10 +151,8 @@ public:
 
     // The folling tests are stand-ins for future unit tests
     // ASSERTIONS:
-    //    - if the input cloud has points, then the output cloud must have
-    //      at least one
-    //    - the size of cloud_out must be less than the size of the
-    //      cloud_in.
+    //  - The ouput point cloud must be at least the size of the
+    //    largest input cloud.
     std::size_t max_point_cloud_size = 0U;
     for (const auto& point_cloud : history_) {
         max_point_cloud_size = std::max(max_point_cloud_size, point_cloud.data.size());
