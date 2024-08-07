@@ -32,83 +32,84 @@
 using pcl_utility_msgs::srv::PCLConcatenatePointCloud;
 constexpr size_t MAX_POINT_CLOUDS = 400U;
 
-/**
- * Concatenate an array of PointCloud2 into a single PointCloud2.
- *
- * Given an array of PointCloud2 messages, concatenate into a single PointCloud2
- * message.
- *
- * @param[in] req sensor_msgs/PointCloud2[] Container of PointCloud2 messages.
- * @param[out] res sensor_msgs/PointCloud2 A PointCloud2 message.
- * @return Bool Service completion result.
- */
-bool concatenate_point_cloud(
-    const rclcpp::Logger & node_logger,
-    PCLConcatenatePointCloud::Request::SharedPtr req,
-    PCLConcatenatePointCloud::Response::SharedPtr res) {
-  unsigned int cloud_list_size = static_cast<unsigned int>(req->cloud_list_in.size());
+class ConcatenatePointCloudService: public rclcpp::Node {
+private:
+  rclcpp::Service<PCLConcatenatePointCloud>::SharedPtr
+    concatenate_pointcloud_service_;
+public:
+  ConcatenatePointCloudService()
+  : rclcpp::Node("concatenate_point_cloud_service")
+  {
+    auto callback = std::bind(
+      &ConcatenatePointCloudService::concatenate_point_cloud,
+      this, std::placeholders::_1, std::placeholders::_2);
 
-  // make sure the number of point clouds can safely
-  // fit in stack memory
-  if (cloud_list_size > MAX_POINT_CLOUDS) {
-    RCLCPP_ERROR_STREAM(
-        node_logger,
-        "the number of pointclouds must be less than " << MAX_POINT_CLOUDS);
-    return false;
+    concatenate_pointcloud_service_ = create_service
+      <PCLConcatenatePointCloud>
+      ("concatenate_point_cloud", std::move(callback));
   }
 
-  // header.frame_id must be managed separately since PCL::PointCloud
-  // does not track frame_id
-  std::string frame_id;
-  for (unsigned int i = 0; i < cloud_list_size; i++) {
-    const std::string current_frame_id = req->cloud_list_in[i].header.frame_id;
+  /**
+   * Concatenate an array of PointCloud2 into a single PointCloud2.
+   *
+   * Given an array of PointCloud2 messages, concatenate into a single PointCloud2
+   * message.
+   *
+   * @param[in] req sensor_msgs/PointCloud2[] Container of PointCloud2 messages.
+   * @param[out] res sensor_msgs/PointCloud2 A PointCloud2 message.
+   * @return Bool Service completion result.
+   */
+  bool concatenate_point_cloud(
+      PCLConcatenatePointCloud::Request::SharedPtr req,
+      PCLConcatenatePointCloud::Response::SharedPtr res) {
+    // header.frame_id must be managed separately since PCL::PointCloud
+    // does not track frame_id
+    std::string frame_id;
+    for (size_t i = 0; i < req->cloud_list_in.size(); ++i) {
+      const std::string current_frame_id =
+        req->cloud_list_in[i].header.frame_id;
 
-    if (frame_id == "") {
-      frame_id = current_frame_id;
+      if (frame_id == "")
+      {
+        frame_id = current_frame_id;
+      }
+
+      if (frame_id != current_frame_id)
+      {
+        // NOTE: RCLCPP_* macros are threadsafe
+        // header.frame_id is not tracked in PCL::PointCloud, must
+        // be managed separetely by ROS for concatenation
+        RCLCPP_ERROR_STREAM(get_logger(),
+          "The point cloud at index #" << i << "has frame of "
+          << std::quoted(current_frame_id) << "which does not match the "
+          << "required frame id of" << std::quoted(frame_id));
+        return 0;
+      }
     }
 
-    if (frame_id != current_frame_id) {
-      // header.frame_id is not tracked in PCL::PointCloud, must
-      // be managed separetely by ROS for concatenation
-      RCLCPP_ERROR_STREAM(node_logger,
-        "the pointcloud at index #" << i << "with the frame of "
-        << std::quoted(current_frame_id) << "does not match the "
-        << "required frame id of" << std::quoted(frame_id));
+    pcl::PointCloud<pcl::PointXYZRGB> input_cloud;
+    pcl::PointCloud<pcl::PointXYZRGB> concatenated_cloud;
+
+    for (auto& point_cloud : req->cloud_list_in) {
+      // req->cloud_list_in[i] becomes invalidated
+      moveFromROSMsg(point_cloud, input_cloud);
+      // PointCloud::operator+= manages is_dense and timestamp feilds
+      concatenated_cloud += input_cloud;
     }
+
+    // If there are no point clouds, the output point cloud
+    // has a frame id of "" and a default constructed point cloud
+    // No function to move from pcl::PointCloud -> PointCloud2
+    toROSMsg(concatenated_cloud, res->cloud_out);
+    res->cloud_out.header.frame_id = std::move(frame_id);
+
+    return true;
   }
-
-  pcl::PointCloud<pcl::PointXYZRGB> cloud_array[cloud_list_size];
-  pcl::PointCloud<pcl::PointXYZRGB> input_cloud;
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr concatenated_cloud(
-      new pcl::PointCloud<pcl::PointXYZRGB>);
-
-  for (unsigned int i = 0; i < cloud_list_size; ++i) {
-    fromROSMsg(req->cloud_list_in[i], input_cloud);
-    cloud_array[i] = input_cloud;
-  }
-
-  for (unsigned int i = 0; i < cloud_list_size; i++) {
-    // PointCloud::operator+= manages is_dense and timestamp feilds
-    // internally
-    *concatenated_cloud += cloud_array[i];
-  }
-
-  toROSMsg(*concatenated_cloud, res->cloud_out);
-
-  res->cloud_out.header.frame_id = std::move(frame_id);
-  return true;
-}
+};
 
 int main(int argc, char ** argv) {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<rclcpp::Node>("concatenate_point_cloud_service");
-  auto callback = std::bind(
-    concatenate_point_cloud, node->get_logger(),
-    std::placeholders::_1, std::placeholders::_2);
-
-  auto dummy_subscriber = node->create_service<PCLConcatenatePointCloud>(
-      "concatenate_point_cloud", std::move(callback));
-  (void)dummy_subscriber;
+  auto node = std::make_shared<ConcatenatePointCloudService>();
 
   rclcpp::spin(node);
   rclcpp::shutdown();

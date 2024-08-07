@@ -21,6 +21,7 @@
         exec="simple_test_concatenate_point_cloud"
         name="simple_test_concatenate_point_cloud"
         namespace="/tests/robot_common_3d/pcl_utilities"
+        output="screen"
     >
         <param name="node_client_name" value="/robot_common_3d/pcl_utilities/concatenate_point_cloud" />
         <param name="point_cloud_topic" value="$(var point_cloud_topic)" />
