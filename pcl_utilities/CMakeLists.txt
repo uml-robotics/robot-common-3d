@@ -41,22 +41,21 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-include_directories(${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
-
 # build all files
 add_library(${PROJECT_NAME} INTERFACE)
 
 add_executable(voxel_grid_filter_service src/voxel_grid_filter_service.cpp)
 add_executable(concatenate_point_cloud_service src/concatenate_point_cloud_service.cpp)
-
 ament_target_dependencies(voxel_grid_filter_service ${THIS_PACKAGE_DEPS})
 ament_target_dependencies(concatenate_point_cloud_service ${THIS_PACKAGE_DEPS})
 
 set(THIS_PACKAGE_EXECS
   voxel_grid_filter_service
   concatenate_point_cloud_service
+)
+
+set(THIS_PACKAGE_EXECS
+  voxel_grid_filter_service
 )
 
 if(BUILD_TESTING)
