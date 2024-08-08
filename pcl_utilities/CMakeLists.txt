@@ -7,7 +7,7 @@ endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # disable the error message associated with VLAs for now until changed
-  add_compile_options(-Wall -Wextra -Wpedantic -Wno-vla) # -Werror
+  add_compile_options(-Wall -Wextra -Wpedantic) # -Werror
 endif()
 
 find_package(PCL REQUIRED)
