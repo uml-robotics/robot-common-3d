@@ -10,6 +10,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -Wno-vla) # -Werror
 endif()
 
+set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
 find_package(PCL REQUIRED)
 # PCL may fail to link with certain environments where
 # `PCL_ROOT` becomes set to '/'.
@@ -52,10 +53,6 @@ ament_target_dependencies(concatenate_point_cloud_service ${THIS_PACKAGE_DEPS})
 set(THIS_PACKAGE_EXECS
   voxel_grid_filter_service
   concatenate_point_cloud_service
-)
-
-set(THIS_PACKAGE_EXECS
-  voxel_grid_filter_service
 )
 
 if(BUILD_TESTING)
