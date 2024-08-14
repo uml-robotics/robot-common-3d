@@ -19,7 +19,8 @@ endif()
 # after which it was a error. This detects the issue and opts out of the check
 #
 # NOTE: Compiler's that use Clang internally but that use different versioning
-# always apply the flag do to a lack of documentation. A warning may
+# always apply the flag do to a lack of documentation. A warning may occur about an
+# additional compile option.
 #
 # All Clang based compilers should match the regex, based on input from:
 # https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html
@@ -27,10 +28,10 @@ endif()
 # See for more info: https://github.com/boostorg/mpl/issues/69
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
     CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0.0) OR
-    CMAKE_CXX_COMPILER_ID MATCHES "(.*Clang|.*LLVM.*)")
+    CMAKE_CXX_COMPILER_ID MATCHES "(.+Clang|.*LLVM.*)")
   find_package(Boost)
   if (Boost_FOUND AND Boost_VERSION VERSION_LESS_EQUAL 1.86.0)
-      add_compile_options(${EXECUTABLE} PUBLIC -Wno-enum-constexpr-conversion)
+    add_compile_options(-Wno-enum-constexpr-conversion)
   endif()
 endif()
 
@@ -90,7 +91,7 @@ if(BUILD_TESTING)
     # -ftrapv : detects signed overflow which is undefined per the C++ standard
     # -Wl,-z,relro : a linker flag to move immutable memory into ROM which
     #     will help detect invalid writes
-    add_compile_options(-g3 -O0 -fstack-protector-all -D FORTIFY_SOURCE=2 -ftrapv -Wl,-z,relro)
+    add_compile_options(-g3 -O0 -D FORTIFY_SOURCE=2)
   endif()
 
   SET(
