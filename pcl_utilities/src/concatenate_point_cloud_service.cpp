@@ -19,6 +19,7 @@
 #include <functional>  // std::bind
 #include <iomanip>  // std::quoted
 #include <memory>  // std::make_shared
+#include <sstream>
 #include <string>
 #include <utility>  // std::move
 
@@ -83,12 +84,13 @@ public:
         // header.frame_id is not tracked in PCL::PointCloud, must
         // be managed separetely by ROS for concatenation
         // NOTE: The linter only approves of the format below
-        RCLCPP_ERROR_STREAM(
-          get_logger(),
-          "The point cloud at index #" << i << " has a frame_id of "
-                                       << std::quoted(
-            current_frame_id) << "which does not match the "
-                                       << "the required frame_id of " << std::quoted(frame_id));
+        std::stringstream error_message;
+
+        error_message << "The point cloud at index #" << i << " has a frame_id of "
+                      << std::quoted(current_frame_id) << "which does not match the "
+                      << "the required frame_id of " << std::quoted(frame_id);
+
+        RCLCPP_ERROR_STREAM(get_logger(), error_message.str());
 
         return false;
       }
