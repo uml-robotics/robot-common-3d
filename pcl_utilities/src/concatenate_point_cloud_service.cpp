@@ -34,10 +34,12 @@
 
 using pcl_utility_msgs::srv::PCLConcatenatePointCloud;
 
-class ConcatenatePointCloudService: public rclcpp::Node {
+class ConcatenatePointCloudService : public rclcpp::Node
+{
 private:
   rclcpp::Service<PCLConcatenatePointCloud>::SharedPtr
     concatenate_pointcloud_service_;
+
 public:
   ConcatenatePointCloudService()
   : rclcpp::Node("concatenate_point_cloud_service")
@@ -47,8 +49,7 @@ public:
       this, std::placeholders::_1, std::placeholders::_2);
 
     concatenate_pointcloud_service_ = create_service
-      <PCLConcatenatePointCloud>
-      ("concatenate_point_cloud", std::move(callback));
+      <PCLConcatenatePointCloud>("concatenate_point_cloud", std::move(callback));
   }
 
   /**
@@ -62,8 +63,9 @@ public:
    * @return Bool Service completion result.
    */
   bool concatenate_point_cloud(
-      PCLConcatenatePointCloud::Request::SharedPtr req,
-      PCLConcatenatePointCloud::Response::SharedPtr res) {
+    PCLConcatenatePointCloud::Request::SharedPtr req,
+    PCLConcatenatePointCloud::Response::SharedPtr res)
+  {
     // header.frame_id must be managed separately since PCL::PointCloud
     // does not track frame_id
     // Assert that all input_clouds have the same frame_id
@@ -72,20 +74,22 @@ public:
       const std::string current_frame_id =
         req->cloud_list_in[i].header.frame_id;
 
-      if (frame_id == "")
-      {
+      if (frame_id == "") {
         frame_id = current_frame_id;
       }
 
-      if (frame_id != current_frame_id)
-      {
+      if (frame_id != current_frame_id) {
         // NOTE: RCLCPP_* macros are threadsafe
         // header.frame_id is not tracked in PCL::PointCloud, must
         // be managed separetely by ROS for concatenation
-        RCLCPP_ERROR_STREAM(get_logger(),
+        // NOTE: The linter only approves of the format below
+        RCLCPP_ERROR_STREAM(
+          get_logger(),
           "The point cloud at index #" << i << " has a frame_id of "
-          << std::quoted(current_frame_id) << "which does not match the "
-          << "required frame_id of " << std::quoted(frame_id));
+                                       << std::quoted(
+            current_frame_id) << "which does not match the "
+                                       << "the required frame_id of " << std::quoted(frame_id));
+
         return false;
       }
     }
@@ -93,7 +97,7 @@ public:
     pcl::PointCloud<pcl::PointXYZRGB> input_cloud;
     pcl::PointCloud<pcl::PointXYZRGB> concatenated_cloud;
 
-    for (auto& point_cloud : req->cloud_list_in) {
+    for (auto & point_cloud : req->cloud_list_in) {
       // req->cloud_list_in[i] becomes invalidated
       moveFromROSMsg(point_cloud, input_cloud);
       // PointCloud::operator+= manages is_dense and timestamp feilds
@@ -110,7 +114,8 @@ public:
   }
 };
 
-int main(int argc, char ** argv) {
+int main(int argc, char ** argv)
+{
   rclcpp::init(argc, argv);
   auto node = std::make_shared<ConcatenatePointCloudService>();
 

@@ -26,11 +26,11 @@ endif()
 # https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html
 #
 # See for more info: https://github.com/boostorg/mpl/issues/69
-if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
+if((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
     CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0.0) OR
     CMAKE_CXX_COMPILER_ID MATCHES "(.+Clang|.*LLVM.*)")
   find_package(Boost)
-  if (Boost_FOUND AND Boost_VERSION VERSION_LESS_EQUAL 1.86.0)
+  if(Boost_FOUND AND Boost_VERSION VERSION_LESS_EQUAL 1.86.0)
     add_compile_options(-Wno-enum-constexpr-conversion)
   endif()
 endif()
@@ -94,7 +94,7 @@ if(BUILD_TESTING)
     add_compile_options(-g3 -O0 -D FORTIFY_SOURCE=2)
   endif()
 
-  SET(
+  set(
     THIS_PACKAGE_TEST_DEPS
     rclcpp
     sensor_msgs

@@ -2,7 +2,7 @@
  * Author: Christian Tagliamonte
  * Date: Aug Aug 4, 2024
  * Editors: N/A
- * Last Modified: Aug 7, 2024
+ * Last Modified: Aug 14, 2024
  *
  * Description: A node to test the concatenate_point_cloud_service.
  * This node listens to a series of sequential pointcloud
@@ -49,15 +49,15 @@ using sensor_msgs::msg::PointCloud2;
 constexpr size_t MAX_POINT_CLOUDS = 100U;
 constexpr std::chrono::seconds MAX_WAIT_TIME {1U};
 
-class TestConcatenatePointCloudNode: public rclcpp::Node
+class TestConcatenatePointCloudNode : public rclcpp::Node
 {
 private:
-    rclcpp::Client<PCLConcatenatePointCloud>::SharedPtr
-      concatenate_point_cloud_client_;
-    rclcpp::Publisher<PointCloud2>::SharedPtr output_publisher_;
-    std::deque<PointCloud2> history_;
-    std::string camera_topic_;
-    size_t num_point_clouds_;
+  rclcpp::Client<PCLConcatenatePointCloud>::SharedPtr
+    concatenate_point_cloud_client_;
+  rclcpp::Publisher<PointCloud2>::SharedPtr output_publisher_;
+  std::deque<PointCloud2> history_;
+  std::string camera_topic_;
+  size_t num_point_clouds_;
 
 public:
   TestConcatenatePointCloudNode()
@@ -87,16 +87,15 @@ public:
 
   void spin()
   {
-    while(rclcpp::ok())
-    {
+    while (rclcpp::ok()) {
       PointCloud2 point_cloud_message;
       bool was_retrieved = rclcpp::wait_for_message(
         point_cloud_message, shared_from_this(),
         camera_topic_, MAX_WAIT_TIME);
 
-      if (!was_retrieved)
-      {
-        RCLCPP_ERROR(get_logger(),
+      if (!was_retrieved) {
+        RCLCPP_ERROR_STREAM(
+          get_logger(),
           "A camera message could not be retrieved within 1 second.");
         continue;
       }
@@ -105,14 +104,13 @@ public:
     }
   }
 
-  void process_point_cloud(PointCloud2& point_cloud) {
+  void process_point_cloud(PointCloud2 & point_cloud)
+  {
     // create a fixed sized context window of old point clouds
     history_.push_back(std::move(point_cloud));
-    if (history_.size() > num_point_clouds_)
-    {
+    if (history_.size() > num_point_clouds_) {
       history_.pop_front();
-    } else if (history_.size() < num_point_clouds_)
-    {
+    } else if (history_.size() < num_point_clouds_) {
       return;
     }
 
@@ -125,9 +123,8 @@ public:
     auto response_code = rclcpp::spin_until_future_complete(
       shared_from_this(), response_future, MAX_WAIT_TIME);
 
-    if (response_code != rclcpp::FutureReturnCode::SUCCESS)
-    {
-      RCLCPP_ERROR(get_logger(), "Failed to recieve a response from the service");
+    if (response_code != rclcpp::FutureReturnCode::SUCCESS) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Failed to recieve a response from the service");
       return;
     }
 
@@ -154,28 +151,29 @@ public:
     //  - The ouput point cloud must be at least the size of the
     //    largest input cloud.
     std::size_t max_point_cloud_size = 0U;
-    for (const auto& point_cloud : history_) {
-        max_point_cloud_size = std::max(max_point_cloud_size, point_cloud.data.size());
+    for (const auto & point_cloud : history_) {
+      max_point_cloud_size = std::max(max_point_cloud_size, point_cloud.data.size());
     }
 
-    if (
-      response->cloud_out.data.size() < max_point_cloud_size)
-    {
-      output_stream << "Sample at time: " << current_time
+    if (response->cloud_out.data.size() < max_point_cloud_size) {
+      output_stream
+        << "Sample at time: " << current_time
         << "produced an output point cloud with a size "
         << "less than an input point cloud.";
 
-      RCLCPP_ERROR(get_logger(), output_stream.str().c_str());
+      RCLCPP_ERROR_STREAM(get_logger(), output_stream.str());
       output_stream.str(""); // clear the stream
     }
   }
 };
 
-int main(int argc, char ** argv) {
+int main(int argc, char ** argv)
+{
   rclcpp::init(argc, argv);
 
   auto node = std::make_shared<TestConcatenatePointCloudNode>();
   node->spin();
 
   rclcpp::shutdown();
+  return 0;
 }
