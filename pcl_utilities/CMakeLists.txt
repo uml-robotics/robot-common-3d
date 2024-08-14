@@ -10,6 +10,30 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic) # -Werror
 endif()
 
+# This is a workaround for a issue within Clang based compilers and BOOST MPL.
+# BOOST MPL invokes undefined behavior by casting an integer to an enum
+# value that does not exist. PCL uses Boost MPL so many header files do not
+# compile. This should be fixed in the next release of Boost, version 1.86.0
+#
+# Clang failed to diagnose the issue until at least version 16.0.0
+# after which it was a error. This detects the issue and opts out of the check
+#
+# NOTE: Compiler's that use Clang internally but that use different versioning
+# always apply the flag do to a lack of documentation. A warning may
+#
+# All Clang based compilers should match the regex, based on input from:
+# https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html
+#
+# See for more info: https://github.com/boostorg/mpl/issues/69
+if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
+    CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0.0) OR
+    CMAKE_CXX_COMPILER_ID MATCHES "(.*Clang|.*LLVM.*)")
+  find_package(Boost)
+  if (Boost_FOUND AND Boost_VERSION VERSION_LESS_EQUAL 1.86.0)
+      add_compile_options(${EXECUTABLE} PUBLIC -Wno-enum-constexpr-conversion)
+  endif()
+endif()
+
 find_package(PCL REQUIRED)
 # PCL may fail to link with certain environments where
 # `PCL_ROOT` becomes set to '/'.
