@@ -1,8 +1,8 @@
 /*
  * Author: Christian Tagliamonte
  * Date: July 23, 2024
- * Editors: Christian Tagliamonte
- * Last Modified: Aug 5, 2024
+ * Editors: N/A
+ * Last Modified: July 23, 2024
  *
  * Description: A node to test the voxel_grid_service. This node listens to a
  *    point cloud topic parameter, `point_cloud_topic`, calls the service,
@@ -14,9 +14,9 @@
 #include <string>
 #include <functional> // std::bind, std::placeholders
 #include <future>
-#include <memory> // std::make_shared
+#include <memory> // std::shared_ptr, std::make_shared
 #include <sstream> // std::stringstream
-#include <ios> // std::fixed, std::setprecision
+#include <ios> // std::fixed, std::set_percision
 
 #include <rclcpp/node.hpp>
 #include <rclcpp/callback_group.hpp>
@@ -26,7 +26,6 @@
 #include <rclcpp/publisher.hpp>
 #include <rclcpp/subscription.hpp>
 #include <rclcpp/logger.hpp>
-
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <pcl_utility_msgs/srv/pcl_voxel_grid_filter.hpp>
@@ -53,9 +52,9 @@ public:
     output_publisher_ = create_publisher<PointCloud2>(
       "voxel_grid_filter/cloud_filtered", 1);
 
-    // Establish callback last to avoid race conditions.
+    // establish callback last to avoid race conditions
 
-    // ROS2 implicitely calls a callback when retrieving the result
+    // ros2 implicitely calls a callback when retrieving the result
     // so the subscriber needs to be in a Re-entrant callback group
     // and the executor needs to be multthreaded. Otherwise
     // `client.async_send_request.get()` deadlocks
@@ -75,14 +74,14 @@ public:
     std::stringstream output_stream;
     output_stream << std::fixed << std::setprecision(4);
 
-    // Call service with pointcloud input
+    // call service with pointcloud input
     auto request = std::make_shared<PCLVoxelGridFilter::Request>();
     request->cloud_in = std::move(*point_cloud);
 
     auto response_future =
       voxel_grid_filter_client_->async_send_request(request);
 
-    // Retreve time to preserve approximate time message was sent
+    // retreve time to preserve approximate time message was sent
     // to format any test failures.
     double current_time = get_clock()->now().seconds();
 
@@ -91,9 +90,9 @@ public:
 
     // The folling tests are stand-ins for future unit tests
     // ASSERTIONS:
-    //    - If the input cloud has points, then the output point cloud must
-    //      have at least one.
-    //    - The size of cloud_out must be less than the size of the
+    //    - if the input cloud has points, then the output cloud must have
+    //      at least one
+    //    - the size of cloud_out must be less than the size of the
     //      cloud_in.
 
     if (
@@ -101,7 +100,7 @@ public:
       request->cloud_in.data.size() > 0)
     {
       output_stream << "Sample at time: " << current_time
-        << "produced output with 0 size with non-zero sized input.";
+        << "produced output with 0 size with nonzero sized input.";
 
       RCLCPP_ERROR(get_logger(), output_stream.str().c_str());
       output_stream.str(""); // clear the stream
@@ -110,7 +109,7 @@ public:
     if (request->cloud_in.data.size() < response->cloud_out.data.size())
     {
       output_stream << "Sample at time: " << current_time
-        << "produces a point cloud with more points than the input.";
+        << "produces a pointcloud with more points than the input.";
 
       RCLCPP_ERROR(get_logger(), output_stream.str().c_str());
       output_stream.str("");
