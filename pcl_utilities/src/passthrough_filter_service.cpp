@@ -163,7 +163,7 @@ public:
     }
 
     std::stringstream message;
-    message << "Passthrough filter bounds do not produce a positive, "
+    message << "Passthrough filter bounds do produce a positive, "
             << "non-zero, non-NaN size:\n"
             << "     X Dimension: " << (x_max_ - y_min_) << "\n"
             << "     Y Dimension: " << (y_max_ - y_min_) << "\n"
