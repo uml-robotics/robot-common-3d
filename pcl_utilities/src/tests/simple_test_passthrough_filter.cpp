@@ -87,14 +87,14 @@ public:
         continue;
       }
 
-      process_point_cloud(point_cloud_message);
+      process_point_cloud(std::move(point_cloud_message));
     }
   }
 
-  void process_point_cloud(PointCloud2 & point_cloud)
+  void process_point_cloud(PointCloud2 && point_cloud)
   {
     auto request = std::make_shared<PCLPassthroughFilter::Request>();
-    request->cloud_in = std::move(point_cloud);
+    request->cloud_in = point_cloud;
 
     auto response_future =
       passthrough_filter_client_->async_send_request(request);

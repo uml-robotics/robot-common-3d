@@ -44,7 +44,6 @@ if((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
   endif()
 endif()
 
-find_package(PCL REQUIRED)
 # PCL may fail to link with certain environments where
 # `PCL_ROOT` becomes set to '/'.
 # See: https://github.com/PointCloudLibrary/pcl/issues/4661
@@ -57,18 +56,22 @@ find_package(PCL REQUIRED)
 # set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
 
 find_package(ament_cmake REQUIRED)
-find_package(sensor_msgs REQUIRED)
+find_package(PCL REQUIRED)
+find_package(pcl_conversions REQUIRED)
 find_package(pcl_utility_msgs REQUIRED)
 find_package(pcl_ros REQUIRED)
-find_package(pcl_conversions REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rcl_interfaces REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 set(THIS_PACKAGE_DEPS
-  rclcpp
-  sensor_msgs
-  pcl_ros
+  PCL
   pcl_conversions
   pcl_utility_msgs
-  PCL
+  pcl_ros
+  rclcpp
+  rcl_interfaces
+  sensor_msgs
 )
 
 include_directories(${PCL_INCLUDE_DIRS})
@@ -109,10 +112,10 @@ if(BUILD_TESTING)
 
   set(
     THIS_PACKAGE_TEST_DEPS
-    rclcpp
-    sensor_msgs
-    pcl_ros
     pcl_utility_msgs
+    rclcpp
+    rcl_interfaces
+    sensor_msgs
   )
 
   add_executable(simple_test_voxel_grid_filter src/tests/simple_test_voxel_grid_filter.cpp)

@@ -15,6 +15,7 @@
  *    `ros2 launch pcl_utilities passthrough_filter.xml`
  */
 #include <functional>  // std::bind
+#include <limits>  // std::numeric_limits
 #include <memory>  // std::make_shared
 #include <sstream>  // std::stringstream
 #include <string_view>  // std::string_view
@@ -27,6 +28,8 @@
 
 #include "rclcpp/node.hpp"
 #include "rclcpp/service.hpp"
+#include "rcl_interfaces/msg/floating_point_range.hpp"
+#include "rcl_interfaces/msg/parameter_descriptor.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 
 #include "pcl_utility_msgs/srv/pcl_passthrough_filter.hpp"
@@ -38,13 +41,13 @@ class PassthroughFilterService : public rclcpp::Node
 {
 private:
   rclcpp::Service<PCLPassthroughFilter>::SharedPtr passthrough_filter_service_;
-
-  float x_min_;
-  float x_max_;
-  float y_min_;
-  float y_max_;
-  float z_min_;
-  float z_max_;
+  rcl_interfaces::msg::ParameterDescriptor constraints_;
+  double x_min_;
+  double x_max_;
+  double y_min_;
+  double y_max_;
+  double z_min_;
+  double z_max_;
 
 public:
   /**
@@ -57,12 +60,21 @@ public:
   {
     std::string param_namespace {g_PARAM_NAMESPACE};
 
-    x_min_ = declare_parameter<float>(param_namespace + "x.min");
-    x_max_ = declare_parameter<float>(param_namespace + "x.max");
-    y_min_ = declare_parameter<float>(param_namespace + "y.min");
-    y_max_ = declare_parameter<float>(param_namespace + "y.max");
-    z_min_ = declare_parameter<float>(param_namespace + "z.min");
-    z_max_ = declare_parameter<float>(param_namespace + "z.max");
+    // All parameters will need to be converted to float
+    // This conversion is undefined if the values within the double
+    // cannot fit within a float. For systems without an Infinity,
+    // std::infinity defaults to the highest representable value.
+    rcl_interfaces::msg::FloatingPointRange float_range;
+    float_range.from_value = double {-std::numeric_limits<float>::infinity()};
+    float_range.to_value = double {std::numeric_limits<float>::infinity()};
+    constraints_.floating_point_range.push_back(float_range);
+
+    x_min_ = declare_parameter<double>(param_namespace + "x.min", constraints_);
+    x_max_ = declare_parameter<double>(param_namespace + "x.max", constraints_);
+    y_min_ = declare_parameter<double>(param_namespace + "y.min", constraints_);
+    y_max_ = declare_parameter<double>(param_namespace + "y.max", constraints_);
+    z_min_ = declare_parameter<double>(param_namespace + "z.min", constraints_);
+    z_max_ = declare_parameter<double>(param_namespace + "z.max", constraints_);
 
     // do not shutdown so all memory is cleaned up before exit
     check_for_valid_limits();
@@ -114,20 +126,25 @@ public:
     pcl::PassThrough<pcl::PointXYZRGB> pass_x;
     pass_x.setInputCloud(temp_cloud);
     pass_x.setFilterFieldName("x");
-    pass_x.setFilterLimits(x_min_, x_max_);
-    // pass_x.setFilterLimitsNegative(false);
+    pass_x.setFilterLimits(
+      static_cast<float>(x_min_),
+      static_cast<float>(x_max_));
     pass_x.filter(*temp_cloud);
 
     pcl::PassThrough<pcl::PointXYZRGB> pass_y;
     pass_y.setInputCloud(temp_cloud);
     pass_y.setFilterFieldName("y");
-    pass_y.setFilterLimits(y_min_, y_max_);
+    pass_y.setFilterLimits(
+      static_cast<float>(y_min_),
+      static_cast<float>(y_max_));
     pass_y.filter(*temp_cloud);
 
     pcl::PassThrough<pcl::PointXYZRGB> pass_z;
     pass_z.setInputCloud(temp_cloud);
     pass_z.setFilterFieldName("z");
-    pass_z.setFilterLimits(z_min_, z_max_);
+    pass_z.setFilterLimits(
+      static_cast<float>(z_min_),
+      static_cast<float>(z_max_));
     pass_z.filter(*temp_cloud);
 
     // preseve the TF frame in the output
@@ -152,12 +169,12 @@ public:
   bool check_for_valid_limits() const
   {
     // Checks to make sure all inputs have a positive size
-    // Must use `!` instead since all comparisons over NaN are
-    // implitely false, so this condition catches this case.
+    // NOTE: all comparisons over NaN are implitely false,
+    // so this condition catches this case.
     if (
-      x_max_ - x_min_ > 0.f &&
-      y_max_ - y_min_ > 0.f &&
-      z_max_ - z_min_ > 0.f)
+      x_max_ - x_min_ > 0.0 &&
+      y_max_ - y_min_ > 0.0 &&
+      z_max_ - z_min_ > 0.0)
     {
       return true;
     }
