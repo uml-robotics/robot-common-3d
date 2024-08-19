@@ -14,6 +14,7 @@
     -->
 
     <arg name="point_cloud_topic" />
+    <arg name="source_frame_name" default="/camera_link" />
     <include file="$(find-pkg-share pcl_utilities)/launch/transform_point_cloud.xml" />
     <node
         pkg="pcl_utilities"
@@ -23,5 +24,6 @@
     >
         <param name="node_client_name" value="/robot_common_3d/pcl_utilities/transform_point_cloud" />
         <param name="point_cloud_topic" value="$(var point_cloud_topic)" />
+        <param name="source_frame_name" value="$(var source_frame_name)" />
     </node>
 </launch>

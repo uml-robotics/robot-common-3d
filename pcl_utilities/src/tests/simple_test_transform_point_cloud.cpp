@@ -1,3 +1,19 @@
+/*
+ * Author: Christian Tagliamonte
+ * Date: Aug Aug 16, 2024
+ * Editors: N/A
+ * Last Modified: Aug 19, 2024
+ *
+ * Description: A node to test the concatenate_point_cloud_service.
+ * This node listens a point cloud message, then transforms the frame of the
+ * point cloud, and publishes the resulting topic.
+ *
+ * The transformed point cloud is then published to the topic
+ *   `transform_point_cloud/cloud_transformed`
+ *
+ * Usage:
+ *    `ros2 launch pcl_utilities test_transform_point_cloud.xml point_cloud_topic:=<POINT_CLOUD_TOPIC>`
+ */
 #include <chrono>   // std::chrono::seconds
 #include <cstdint>  // int64_t
 #include <functional>  // std::bind, std::placeholders
@@ -39,13 +55,15 @@ private:
   rclcpp::Publisher<PointCloud2>::SharedPtr output_publisher_;
   std::string camera_topic_;
   std::string target_frame_name_;
+  std::string source_frame_name_;
 
 public:
   TestTransformPointCloudNode()
   : rclcpp::Node("simple_test_transform_point_cloud"),
-    tf_broadcaster_(*static_cast<rclcpp::Node*>(this))
+    tf_broadcaster_(*static_cast<rclcpp::Node *>(this))
   {
     std::string client_topic = declare_parameter<std::string>("node_client_name");
+    source_frame_name_ = declare_parameter<std::string>("source_frame_name");
     camera_topic_ = declare_parameter<std::string>("point_cloud_topic");
 
     transform_point_cloud_client_ =
@@ -80,7 +98,7 @@ public:
   {
     // Send a recent transform for the service to use
     TransformStamped tf_transform;
-    tf_transform.header.frame_id = "/camera_link";
+    tf_transform.header.frame_id = source_frame_name_;
     tf_transform.child_frame_id = target_frame_name_;
     tf_transform.header.stamp = get_clock()->now();
 
