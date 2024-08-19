@@ -27,8 +27,6 @@
 
 #include "rclcpp/logging.hpp"
 #include "rclcpp/node.hpp"
-#include "rcl_interfaces/msg/integer_range.hpp"
-#include "rcl_interfaces/msg/parameter_descriptor.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 
 #include "tf2_ros/buffer.h"
@@ -51,20 +49,7 @@ public:
   : rclcpp::Node("transform_point_cloud_service"),
     tf_buffer_(get_clock()), tf_listener_(tf_buffer_)
   {
-    // -1 signals an infinite number of attempts
-    // If a value is set to above this, it should probably be -1
-    constexpr int64_t MAX_REASONABLE_TRANSFORM_ATTEMPTS = 500;
-
-    // Setup ROS parameters
-    rcl_interfaces::msg::ParameterDescriptor param_constraints;
-    rcl_interfaces::msg::IntegerRange integer_range;
-
-    integer_range.from_value = -1;
-    integer_range.to_value = MAX_REASONABLE_TRANSFORM_ATTEMPTS;
-    param_constraints.integer_range.push_back(integer_range);
-
-    max_transforms_ = declare_parameter<int64_t>(
-      "max_transform_attempts", std::move(param_constraints));
+    max_transforms_ = declare_parameter<int64_t>("max_transform_attempts");
 
     // Attach the callback
     auto callback = std::bind(
