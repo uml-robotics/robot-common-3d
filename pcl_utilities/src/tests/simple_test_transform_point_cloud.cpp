@@ -7,6 +7,11 @@
  * Description: A node to test the concatenate_point_cloud_service.
  * This node listens a point cloud message, then transforms the frame of the
  * point cloud, and publishes the resulting topic.
+ * This script takes in two parameters:
+ *    `source_frame_name` = The frame to transform from
+ *    `point_cloud_topic` = The topic name to read point cloud images from
+ * Note: The target TF frame is dynamically generated and not controlled
+ * by a parameter.
  *
  * The transformed point cloud is then published to the topic
  *   `transform_point_cloud/cloud_transformed`
