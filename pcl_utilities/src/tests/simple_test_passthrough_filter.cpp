@@ -23,12 +23,7 @@
  *    `ros2 launch pcl_utilities test_passthrough_filter_service.xml point_cloud_topic:=<POINT_CLOUD_TOPIC>`
  */
 #include <chrono>   // std::chrono::seconds
-#include <cstddef>  // size_t
-#include <cstdint>  // int64_t
-#include <functional>  // std::bind, std::placeholders
-#include <ios>  // std::fixed, std::setprecision
 #include <memory>  // std::make_shared
-#include <sstream>  // std::stringstream
 #include <string>
 #include <utility>  // std::move
 
