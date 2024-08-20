@@ -29,7 +29,6 @@
 #include "rclcpp/logging.hpp"
 #include "rclcpp/node.hpp"
 #include "rclcpp/publisher.hpp"
-#include "rclcpp/subscription.hpp"
 #include "rclcpp/wait_for_message.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
