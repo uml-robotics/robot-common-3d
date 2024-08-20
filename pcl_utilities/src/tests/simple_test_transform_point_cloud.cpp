@@ -4,8 +4,8 @@
  * Editors: N/A
  * Last Modified: Aug 19, 2024
  *
- * Description: A node to test the concatenate_point_cloud_service.
- * This node listens a point cloud message, then transforms the frame of the
+ * Description: A node to test the transform_point_cloud_service.
+ * This node listens to a point cloud message, then transforms the frame of the
  * point cloud, and publishes the resulting topic.
  * This script takes in two parameters:
  *    `source_frame_name` = The frame to transform from
@@ -20,13 +20,7 @@
  *    `ros2 launch pcl_utilities test_transform_point_cloud.xml point_cloud_topic:=<POINT_CLOUD_TOPIC>`
  */
 #include <chrono>   // std::chrono::seconds
-#include <cstdint>  // int64_t
-#include <functional>  // std::bind, std::placeholders
-#include <ios>  // std::fixed, std::setprecision
 #include <memory>  // std::make_shared
-#include <optional>  // std::optional
-#include <random>
-#include <sstream>  // std::stringstream
 #include <string>
 #include <utility>  // std::move
 

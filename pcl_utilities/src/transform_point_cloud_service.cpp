@@ -15,12 +15,9 @@
  *    `ros2 launch pcl_utilities transform_point_cloud.xml`
  */
 
-#include <cstdint>  // std::int64_t
-#include <functional>  // std::bind
-#include <iomanip>  // std::quoted
+#include <cstdint>  // int64_t
+#include <functional>  // std::bind, std::placeholders
 #include <memory>  // std::make_shared
-#include <sstream>  // std::stringstream
-#include <string>
 #include <utility>  // std::move
 
 #include "pcl_utility_msgs/srv/pcl_transform_point_cloud.hpp"
