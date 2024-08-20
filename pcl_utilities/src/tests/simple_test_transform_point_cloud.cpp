@@ -33,7 +33,6 @@
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 
-#include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_broadcaster.h"
 
 #include "pcl_utility_msgs/srv/pcl_transform_point_cloud.hpp"
