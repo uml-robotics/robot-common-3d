@@ -1,0 +1,11 @@
+<launch>
+    <node
+        pkg="pcl_utilities"
+        exec="transform_point_cloud_service"
+        name="transform_point_cloud"
+        namespace="robot_common_3d/pcl_utilities"
+        output="screen"
+    >
+        <param name="max_transform_attempts" value="8" />
+    </node>
+</launch>

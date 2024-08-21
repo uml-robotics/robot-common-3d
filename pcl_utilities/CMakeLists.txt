@@ -56,22 +56,28 @@ endif()
 # set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
 
 find_package(ament_cmake REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(PCL REQUIRED)
 find_package(pcl_conversions REQUIRED)
-find_package(pcl_utility_msgs REQUIRED)
 find_package(pcl_ros REQUIRED)
+find_package(pcl_utility_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcl_interfaces REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_sensor_msgs)
 
 set(THIS_PACKAGE_DEPS
+  geometry_msgs
   PCL
   pcl_conversions
-  pcl_utility_msgs
   pcl_ros
+  pcl_utility_msgs
   rclcpp
   rcl_interfaces
   sensor_msgs
+  tf2_ros
+  tf2_sensor_msgs
 )
 
 include_directories(${PCL_INCLUDE_DIRS})
@@ -84,15 +90,18 @@ add_library(${PROJECT_NAME} INTERFACE)
 add_executable(voxel_grid_filter_service src/voxel_grid_filter_service.cpp)
 add_executable(concatenate_point_cloud_service src/concatenate_point_cloud_service.cpp)
 add_executable(passthrough_filter_service src/passthrough_filter_service.cpp)
+add_executable(transform_point_cloud_service src/transform_point_cloud_service.cpp)
 
 ament_target_dependencies(voxel_grid_filter_service ${THIS_PACKAGE_DEPS})
 ament_target_dependencies(concatenate_point_cloud_service ${THIS_PACKAGE_DEPS})
 ament_target_dependencies(passthrough_filter_service ${THIS_PACKAGE_DEPS})
+ament_target_dependencies(transform_point_cloud_service ${THIS_PACKAGE_DEPS})
 
 set(THIS_PACKAGE_EXECS
   voxel_grid_filter_service
   concatenate_point_cloud_service
   passthrough_filter_service
+  transform_point_cloud_service
 )
 
 if(BUILD_TESTING)
@@ -102,12 +111,8 @@ if(BUILD_TESTING)
   if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # these options will make debugging memory issues and undefined behavior easier
     # -g3 -O0 : make debugging easier using GDB
-    # -fstack-protector-all : will crash if stack corruption is detected
     # -D FORTIFY_SOURCE=2 : adds memory corruption protections
-    # -ftrapv : detects signed overflow which is undefined per the C++ standard
-    # -Wl,-z,relro : a linker flag to move immutable memory into ROM which
-    #     will help detect invalid writes
-    add_compile_options(-g3 -O0 -D FORTIFY_SOURCE=2)
+    add_compile_options(-g3 -O0 -D_FORTIFY_SOURCE=2)
   endif()
 
   set(
@@ -116,20 +121,24 @@ if(BUILD_TESTING)
     rclcpp
     rcl_interfaces
     sensor_msgs
+    tf2_ros
   )
 
   add_executable(simple_test_voxel_grid_filter src/tests/simple_test_voxel_grid_filter.cpp)
   add_executable(simple_test_concatenate_point_cloud src/tests/simple_test_concatenate_point_cloud.cpp)
   add_executable(simple_test_passthrough_filter src/tests/simple_test_passthrough_filter.cpp)
+  add_executable(simple_test_transform_point_cloud src/tests/simple_test_transform_point_cloud.cpp)
 
   ament_target_dependencies(simple_test_voxel_grid_filter ${THIS_PACKAGE_TEST_DEPS})
   ament_target_dependencies(simple_test_concatenate_point_cloud ${THIS_PACKAGE_TEST_DEPS})
   ament_target_dependencies(simple_test_passthrough_filter ${THIS_PACKAGE_TEST_DEPS})
+  ament_target_dependencies(simple_test_transform_point_cloud ${THIS_PACKAGE_TEST_DEPS})
 
   list(APPEND THIS_PACKAGE_EXECS
     simple_test_voxel_grid_filter
     simple_test_concatenate_point_cloud
     simple_test_passthrough_filter
+    simple_test_transform_point_cloud
   )
 
   find_package(ament_lint_auto REQUIRED)
@@ -152,7 +161,7 @@ install(TARGETS
 )
 
 install(DIRECTORY launch
-  DESTINATION share/${PROJECT_NAME}/
+  DESTINATION share/${PROJECT_NAME}
 )
 
 ament_export_targets("export_${PROJECT_NAME}")
