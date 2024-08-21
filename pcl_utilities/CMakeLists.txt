@@ -1,6 +1,15 @@
 cmake_minimum_required(VERSION 3.8)
 project(pcl_utilities)
 
+# This code should not be compiled with `-Ofast` or `-ffastmath`
+# for the following reasons:
+#  - These utilities rely on IEEE 754 Compliance.
+#  - PCL uses floating point operations internally, and enabling these
+#    flags can result in unexpected behavior in client code.
+#
+# It is the users responsibility to add the appropriate flags on
+# non Clang/GNU-based compilers (including. non-posix frontend variants.)
+
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
@@ -80,15 +89,18 @@ add_library(${PROJECT_NAME} INTERFACE)
 
 add_executable(voxel_grid_filter_service src/voxel_grid_filter_service.cpp)
 add_executable(concatenate_point_cloud_service src/concatenate_point_cloud_service.cpp)
+add_executable(passthrough_filter_service src/passthrough_filter_service.cpp)
 add_executable(transform_point_cloud_service src/transform_point_cloud_service.cpp)
 
 ament_target_dependencies(voxel_grid_filter_service ${THIS_PACKAGE_DEPS})
 ament_target_dependencies(concatenate_point_cloud_service ${THIS_PACKAGE_DEPS})
+ament_target_dependencies(passthrough_filter_service ${THIS_PACKAGE_DEPS})
 ament_target_dependencies(transform_point_cloud_service ${THIS_PACKAGE_DEPS})
 
 set(THIS_PACKAGE_EXECS
   voxel_grid_filter_service
   concatenate_point_cloud_service
+  passthrough_filter_service
   transform_point_cloud_service
 )
 
@@ -105,23 +117,27 @@ if(BUILD_TESTING)
 
   set(
     THIS_PACKAGE_TEST_DEPS
-    pcl_ros
     pcl_utility_msgs
     rclcpp
+    rcl_interfaces
     sensor_msgs
+    tf2_ros
   )
 
   add_executable(simple_test_voxel_grid_filter src/tests/simple_test_voxel_grid_filter.cpp)
   add_executable(simple_test_concatenate_point_cloud src/tests/simple_test_concatenate_point_cloud.cpp)
+  add_executable(simple_test_passthrough_filter src/tests/simple_test_passthrough_filter.cpp)
   add_executable(simple_test_transform_point_cloud src/tests/simple_test_transform_point_cloud.cpp)
 
   ament_target_dependencies(simple_test_voxel_grid_filter ${THIS_PACKAGE_TEST_DEPS})
   ament_target_dependencies(simple_test_concatenate_point_cloud ${THIS_PACKAGE_TEST_DEPS})
+  ament_target_dependencies(simple_test_passthrough_filter ${THIS_PACKAGE_TEST_DEPS})
   ament_target_dependencies(simple_test_transform_point_cloud ${THIS_PACKAGE_TEST_DEPS})
 
   list(APPEND THIS_PACKAGE_EXECS
     simple_test_voxel_grid_filter
     simple_test_concatenate_point_cloud
+    simple_test_passthrough_filter
     simple_test_transform_point_cloud
   )
 
