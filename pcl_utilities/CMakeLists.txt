@@ -1,6 +1,15 @@
 cmake_minimum_required(VERSION 3.8)
 project(pcl_utilities)
 
+# This code should not be compiled with `-Ofast` or `-ffastmath`
+# for the following reasons:
+#  - These utilities rely on IEEE 754 Compliance.
+#  - PCL uses floating point operations internally, and enabling these
+#    flags can result in unexpected behavior in client code.
+#
+# It is the users responsibility to add the appropriate flags on
+# non Clang/GNU-based compilers (including. non-posix frontend variants.)
+
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
@@ -35,7 +44,6 @@ if((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
   endif()
 endif()
 
-find_package(PCL REQUIRED)
 # PCL may fail to link with certain environments where
 # `PCL_ROOT` becomes set to '/'.
 # See: https://github.com/PointCloudLibrary/pcl/issues/4661
@@ -48,18 +56,22 @@ find_package(PCL REQUIRED)
 # set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
 
 find_package(ament_cmake REQUIRED)
-find_package(sensor_msgs REQUIRED)
+find_package(PCL REQUIRED)
+find_package(pcl_conversions REQUIRED)
 find_package(pcl_utility_msgs REQUIRED)
 find_package(pcl_ros REQUIRED)
-find_package(pcl_conversions REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rcl_interfaces REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
 set(THIS_PACKAGE_DEPS
-  rclcpp
-  sensor_msgs
-  pcl_ros
+  PCL
   pcl_conversions
   pcl_utility_msgs
-  PCL
+  pcl_ros
+  rclcpp
+  rcl_interfaces
+  sensor_msgs
 )
 
 include_directories(${PCL_INCLUDE_DIRS})
@@ -71,12 +83,16 @@ add_library(${PROJECT_NAME} INTERFACE)
 
 add_executable(voxel_grid_filter_service src/voxel_grid_filter_service.cpp)
 add_executable(concatenate_point_cloud_service src/concatenate_point_cloud_service.cpp)
+add_executable(passthrough_filter_service src/passthrough_filter_service.cpp)
+
 ament_target_dependencies(voxel_grid_filter_service ${THIS_PACKAGE_DEPS})
 ament_target_dependencies(concatenate_point_cloud_service ${THIS_PACKAGE_DEPS})
+ament_target_dependencies(passthrough_filter_service ${THIS_PACKAGE_DEPS})
 
 set(THIS_PACKAGE_EXECS
   voxel_grid_filter_service
   concatenate_point_cloud_service
+  passthrough_filter_service
 )
 
 if(BUILD_TESTING)
@@ -96,21 +112,24 @@ if(BUILD_TESTING)
 
   set(
     THIS_PACKAGE_TEST_DEPS
-    rclcpp
-    sensor_msgs
-    pcl_ros
     pcl_utility_msgs
+    rclcpp
+    rcl_interfaces
+    sensor_msgs
   )
 
   add_executable(simple_test_voxel_grid_filter src/tests/simple_test_voxel_grid_filter.cpp)
   add_executable(simple_test_concatenate_point_cloud src/tests/simple_test_concatenate_point_cloud.cpp)
+  add_executable(simple_test_passthrough_filter src/tests/simple_test_passthrough_filter.cpp)
 
   ament_target_dependencies(simple_test_voxel_grid_filter ${THIS_PACKAGE_TEST_DEPS})
   ament_target_dependencies(simple_test_concatenate_point_cloud ${THIS_PACKAGE_TEST_DEPS})
+  ament_target_dependencies(simple_test_passthrough_filter ${THIS_PACKAGE_TEST_DEPS})
 
   list(APPEND THIS_PACKAGE_EXECS
     simple_test_voxel_grid_filter
     simple_test_concatenate_point_cloud
+    simple_test_passthrough_filter
   )
 
   find_package(ament_lint_auto REQUIRED)
