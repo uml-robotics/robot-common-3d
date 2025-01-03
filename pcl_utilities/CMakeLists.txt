@@ -37,11 +37,6 @@ if((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
   endif()
 endif()
 
-# add_compile_definitions(${PCL_DEFINITIONS})
-# PCL_NO_PRECOMPILE is required to avoid address sanitizer issues in clang, see https://github.com/PointCloudLibrary/pcl/issues/5831
-# add_compile_definitions(PCL_NO_PRECOMPILE)
-add_link_options(-fsanitize=undefined,address,leak)
-add_compile_options(-fsanitize=undefined,address,leak)
 # PCL may fail to link with certain environments where
 # `PCL_ROOT` becomes set to '/'.
 # See: https://github.com/PointCloudLibrary/pcl/issues/4661
@@ -75,7 +70,9 @@ set(THIS_PACKAGE_DEPS
 
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
+# PCL_NO_PRECOMPILE is required to avoid address sanitizer issues in clang,
+# see https://github.com/PointCloudLibrary/pcl/issues/5831
+add_definitions(${PCL_DEFINITIONS} PCL_NO_PRECOMPILE)
 
 # build all files
 add_library(${PROJECT_NAME} INTERFACE)
