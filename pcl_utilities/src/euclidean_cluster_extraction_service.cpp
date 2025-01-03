@@ -2,28 +2,30 @@
  * Author: Brian Flynn
  * Date: Nov 15, 2022
  * Editors: Christian Tagliamonte
- * Last Modified: Aug 4, 2024
+ * Last Modified: Jan 2, 2025
  * Adapted from:
  * https://github.com/uml-robotics/armada_behaviors/blob/main/armada_flexbe_utilities/src/service/pcl_concatenate_pointcloud_service.cpp
  *
- * Description: Starts up a service for concatenating point cloud messages.
+ * Description: Starts up a service for extracting point clusters
+ *   from an input point cloud message. Thus script returns a list of
+ *   individual point cloud messages for each identified cluster.
  *
- * Input: sensor_msgs/PointCloud2[]
- * Output: sensor_msgs/PointCloud2
+ * Input: sensor_msgs/PointCloud2
+ * Output: sensor_msgs/PointCloud2[]
  *
  * Usage:
  *    `ros2 launch pcl_utilities concatenate_point_cloud.xml`
  */
 #include <cassert>  // assert
+#include <cstdint>  // uintmax_t
 #include <functional>  // for std::bind
 #include <limits>  // std::numeric_limits
 #include <memory>  // std::make_shared
-#include <string_view>
-#include <type_traits>  // std::common_type
+#include <string_view>  // std::string_view
 #include <utility>  // std::move
-#include <vector>
+#include <vector>  // std::string
 
-#include "pcl/impl/point_types.hpp"
+#include "pcl/point_types.h"
 #include "pcl/point_cloud.h"
 #include "pcl/segmentation/extract_clusters.h"
 #include "pcl_conversions/pcl_conversions.h"
@@ -36,8 +38,10 @@
 #include "sensor_msgs/msg/point_cloud2.hpp"
 
 using pcl_utility_msgs::srv::PCLEuclideanClusterExtraction;
-constexpr std::string_view g_PARAM_NAMESPACE = "filters.euclidean_cluster_extraction.";
+constexpr std::string_view kParamNamespaceView = "filters.euclidean_cluster_extraction.";
 
+namespace
+{
 class EuclideanClusterExtractionService : public rclcpp::Node
 {
 private:
@@ -57,13 +61,12 @@ public:
   EuclideanClusterExtractionService()
   : rclcpp::Node("euclidean_cluster_extraction_service")
   {
-    std::string param_namespace {g_PARAM_NAMESPACE};
+    const std::string kParamNamespace {kParamNamespaceView};
 
     // cap the parameter value within the range of pcl::uindex_t
     rcl_interfaces::msg::IntegerRange integer_range;
-    using RangeType = std::common_type_t<int64_t, pcl::uindex_t>;
-    auto value_or_max = std::min<RangeType>(
-      std::numeric_limits<int64_t>::max(),
+    auto value_or_max = std::min<uintmax_t>(
+      static_cast<uintmax_t>(std::numeric_limits<int64_t>::max()),
       std::numeric_limits<pcl::uindex_t>::max());
 
     integer_range.from_value = 0;
@@ -72,12 +75,12 @@ public:
 
     // declare all parameters
     cluster_tolerance_ = declare_parameter<double>(
-      param_namespace + "cluster_tolerance");
+      kParamNamespace + "cluster_tolerance");
 
     min_cluster_size_ = declare_parameter<int64_t>(
-      param_namespace + "min_cluster_size", param_constraints_);
+      kParamNamespace + "min_cluster_size", param_constraints_);
     max_cluster_size_ = declare_parameter<int64_t>(
-      param_namespace + "max_cluster_size", param_constraints_);
+      kParamNamespace + "max_cluster_size", param_constraints_);
 
     // create callback and setup service
     auto callback = std::bind(
@@ -91,7 +94,7 @@ public:
   /**
    * Segment clusters within a PointCloud into individual cloud objects.
    *
-   * BGiven a PointCloud2 message, segment clusters of points into their 
+   * Given a PointCloud2 message, segment clusters of points into their
    * own PointCloud2 objects for further processing/handling.
    *
    * @param[in] req sensor_msgs/PointCloud2 A PointCloud2 message.
@@ -102,11 +105,11 @@ public:
     PCLEuclideanClusterExtraction::Request::SharedPtr req,
     PCLEuclideanClusterExtraction::Response::SharedPtr res)
   {
-    std::string param_namespace {g_PARAM_NAMESPACE};
+    const std::string kParamNamespace {kParamNamespaceView};
 
-    get_parameter(param_namespace + "cluster_tolerance", cluster_tolerance_);
-    get_parameter(param_namespace + "min_cluster_size", min_cluster_size_);
-    get_parameter(param_namespace + "max_cluster_size", max_cluster_size_);
+    get_parameter(kParamNamespace + "cluster_tolerance", cluster_tolerance_);
+    get_parameter(kParamNamespace + "min_cluster_size", min_cluster_size_);
+    get_parameter(kParamNamespace + "max_cluster_size", max_cluster_size_);
 
     auto input_cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
     sensor_msgs::msg::PointCloud2 temp_cloud;
@@ -127,16 +130,24 @@ public:
     ec.setInputCloud(input_cloud);
     ec.extract(cluster_indices);
 
-    for (const pcl::PointIndices& indecies : cluster_indices) {
-      pcl::PointCloud<pcl::PointXYZRGB> cloud_cluster;
+    pcl::PointCloud<pcl::PointXYZRGB> cloud_cluster;
+
+    for (const pcl::PointIndices & indecies : cluster_indices) {
+      cloud_cluster.clear();
 
       for (pcl::index_t index : indecies.indices) {
-        assert(index >= 0 && index <= std::numeric_limits<size_t>::max());
+        // This should always be true, this will become relevent
+        // if PCL extends the underlying pcl::index_t type to 64 bits
+        assert(
+          index >= 0 &&
+          static_cast<uintmax_t>(index) <= uintmax_t{std::numeric_limits<size_t>::max()});
 
         cloud_cluster.push_back((*input_cloud)[static_cast<size_t>(index)]);
       }
 
-      assert(cloud_cluster.size() <= std::numeric_limits<pcl::uindex_t>::max());
+      assert(
+        uintmax_t{cloud_cluster.size()} <=
+        uintmax_t{std::numeric_limits<pcl::uindex_t>::max()});
 
       cloud_cluster.width = static_cast<pcl::uindex_t>(cloud_cluster.size());
       cloud_cluster.height = 1U;
@@ -144,20 +155,13 @@ public:
       cloud_cluster.header.frame_id = input_cloud->header.frame_id;
 
       pcl::toROSMsg(cloud_cluster, temp_cloud);
-      obstacle_cloud_list_out.push_back(std::move(temp_cloud));
+      res->cloud_list_out.push_back(std::move(temp_cloud));
     }
 
-    if (obstacle_cloud_list_out.empty()) {
-      return true;
-    }
-
-    res->target_cloud_out = std::move(obstacle_cloud_list_out[0]);
-    obstacle_cloud_list_out.erase(obstacle_cloud_list_out.cbegin());
-
-    res->obstacle_cloud_list_out = std::move(obstacle_cloud_list_out);
     return true;
   }
 };
+}  // namespace
 
 int main(int argc, char ** argv)
 {
