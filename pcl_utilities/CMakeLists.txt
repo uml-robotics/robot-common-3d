@@ -72,7 +72,7 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 # PCL_NO_PRECOMPILE is required to avoid address sanitizer issues in clang,
 # see https://github.com/PointCloudLibrary/pcl/issues/5831
-add_definitions(${PCL_DEFINITIONS} PCL_NO_PRECOMPILE)
+add_definitions(${PCL_DEFINITIONS} -DPCL_NO_PRECOMPILE)
 
 # build all files
 add_library(${PROJECT_NAME} INTERFACE)
