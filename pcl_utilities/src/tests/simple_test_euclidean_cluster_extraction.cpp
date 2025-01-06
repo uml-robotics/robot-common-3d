@@ -26,22 +26,18 @@
  * Usage:
  *    `ros2 launch pcl_utilities test_euclidan_cluster_extraction.xml point_cloud_topic:=<POINT_CLOUD_TOPIC>`
  */
-#include <pcl/point_types.h>
-#include <pcl/point_cloud.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl/point_types_conversion.h>
 
 #include <algorithm>  // std::min
 #include <cassert>  // assert
 #include <chrono>  // std::chrono::seconds
 #include <cstddef>  // size_t
 #include <cstdint>  // uint8_t
-#include <functional>  // std::bind, std::placeholders
 #include <memory>  // std::make_shared
 #include <string>  // std::string
 #include <utility>  // std::move
 
 #include <Eigen/Core>  // Eigen::Vector4f
+
 #include <pcl/filters/crop_box.h>
 #include <pcl/filters/voxel_grid.h>
 
@@ -54,8 +50,13 @@
 #include <rclcpp/wait_for_message.hpp>
 
 #include <pcl/pcl_config.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/point_types_conversion.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
+
 #include "pcl_utility_msgs/srv/pcl_euclidean_cluster_extraction.hpp"
 
 using pcl_utility_msgs::srv::PCLEuclideanClusterExtraction;

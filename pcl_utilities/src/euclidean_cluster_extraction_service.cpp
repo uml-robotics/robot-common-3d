@@ -29,13 +29,14 @@
 #include "pcl/point_cloud.h"
 #include "pcl/segmentation/extract_clusters.h"
 #include "pcl_conversions/pcl_conversions.h"
-#include "pcl_utility_msgs/srv/pcl_euclidean_cluster_extraction.hpp"
 
 #include "rclcpp/node.hpp"
 #include "rclcpp/service.hpp"
 #include "rcl_interfaces/msg/integer_range.hpp"
 #include "rcl_interfaces/msg/parameter_descriptor.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
+
+#include "pcl_utility_msgs/srv/pcl_euclidean_cluster_extraction.hpp"
 
 using pcl_utility_msgs::srv::PCLEuclideanClusterExtraction;
 constexpr std::string_view kParamNamespaceView = "filters.euclidean_cluster_extraction.";
