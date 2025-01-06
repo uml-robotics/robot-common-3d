@@ -46,7 +46,6 @@
 #include <rclcpp/logging.hpp>
 #include <rclcpp/node.hpp>
 #include <rclcpp/publisher.hpp>
-#include <rclcpp/subscription.hpp>
 #include <rclcpp/wait_for_message.hpp>
 
 #include <pcl/pcl_config.h>
