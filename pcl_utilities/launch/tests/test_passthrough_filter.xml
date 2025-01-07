@@ -1,0 +1,27 @@
+<launch>
+    <!--
+        Pointcloud is published to the topic: tests/robot_common_3d/pcl_utilities/passthrough_filter/cloud_filtered
+
+        Must launch camera with depth output enabled before this node and
+        specify the ros arg `-\-ros-args point_cloud_topic:=<topic>`
+        example:
+
+        ```
+        ros2 launch realsense2_camera rs_launch.py depth_module.depth_profile:=1280x720x30 pointcloud.enable:=true
+
+        ros2 launch pcl_utilities test_passthrough_filter.xml point_cloud_topic:=/camera/camera/depth/color/points
+        ```
+    -->
+
+    <include file="$(find-pkg-share pcl_utilities)/launch/passthrough_filter.xml" />
+    <node
+        pkg="pcl_utilities"
+        exec="simple_test_passthrough_filter"
+        name="simple_test_passthrough_filter"
+        namespace="/tests/robot_common_3d/pcl_utilities"
+        output="screen"
+    >
+        <param name="node_client_name" value="/robot_common_3d/pcl_utilities/passthrough_filter" />
+        <param name="point_cloud_topic" value="$(var point_cloud_topic)" />
+    </node>
+</launch>
