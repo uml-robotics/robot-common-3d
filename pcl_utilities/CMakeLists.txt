@@ -9,7 +9,6 @@ project(pcl_utilities)
 #
 # It is the users responsibility to add the appropriate flags on
 # non Clang/GNU-based compilers (including. non-posix frontend variants.)
-
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
@@ -57,8 +56,8 @@ endif()
 # Fix by setting PCL_DIR to the path of the PCL cmake file:
 # set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
 
-find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(ament_cmake REQUIRED)
+find_package(Eigen3 REQUIRED NO_MODULE)
 find_package(PCL REQUIRED)
 find_package(pcl_conversions REQUIRED)
 find_package(pcl_ros REQUIRED)
@@ -86,21 +85,21 @@ add_definitions(${PCL_DEFINITIONS} -DPCL_NO_PRECOMPILE)
 # build all files
 add_library(${PROJECT_NAME} INTERFACE)
 
-add_executable(voxel_grid_filter_service src/voxel_grid_filter_service.cpp)
 add_executable(concatenate_point_cloud_service src/concatenate_point_cloud_service.cpp)
 add_executable(euclidean_cluster_extraction_service src/euclidean_cluster_extraction_service.cpp)
 add_executable(passthrough_filter_service src/passthrough_filter_service.cpp)
+add_executable(voxel_grid_filter_service src/voxel_grid_filter_service.cpp)
 
-ament_target_dependencies(voxel_grid_filter_service ${THIS_PACKAGE_DEPS})
 ament_target_dependencies(concatenate_point_cloud_service ${THIS_PACKAGE_DEPS})
 ament_target_dependencies(euclidean_cluster_extraction_service ${THIS_PACKAGE_DEPS})
 ament_target_dependencies(passthrough_filter_service ${THIS_PACKAGE_DEPS})
+ament_target_dependencies(voxel_grid_filter_service ${THIS_PACKAGE_DEPS})
 
 set(THIS_PACKAGE_EXECS
-  voxel_grid_filter_service
   concatenate_point_cloud_service
   euclidean_cluster_extraction_service
   passthrough_filter_service
+  voxel_grid_filter_service
 )
 
 if(BUILD_TESTING)
@@ -112,35 +111,35 @@ if(BUILD_TESTING)
     PCL
     pcl_conversions
     pcl_ros
+    pcl_utility_msgs
     rclcpp
     rcl_interfaces
-    rcl_interfaces
     sensor_msgs
-    pcl_utility_msgs
   )
 
-  add_executable(simple_test_voxel_grid_filter src/tests/simple_test_voxel_grid_filter.cpp)
   add_executable(simple_test_concatenate_point_cloud src/tests/simple_test_concatenate_point_cloud.cpp)
   add_executable(simple_test_euclidean_cluster_extraction src/tests/simple_test_euclidean_cluster_extraction.cpp)
   add_executable(simple_test_passthrough_filter src/tests/simple_test_passthrough_filter.cpp)
+  add_executable(simple_test_voxel_grid_filter src/tests/simple_test_voxel_grid_filter.cpp)
 
-  ament_target_dependencies(simple_test_voxel_grid_filter ${THIS_PACKAGE_TEST_DEPS})
   ament_target_dependencies(simple_test_concatenate_point_cloud ${THIS_PACKAGE_TEST_DEPS})
   ament_target_dependencies(simple_test_euclidean_cluster_extraction ${THIS_PACKAGE_TEST_DEPS})
   ament_target_dependencies(simple_test_passthrough_filter ${THIS_PACKAGE_TEST_DEPS})
+  ament_target_dependencies(simple_test_voxel_grid_filter ${THIS_PACKAGE_TEST_DEPS})
 
   list(APPEND THIS_PACKAGE_EXECS
-    simple_test_voxel_grid_filter
     simple_test_concatenate_point_cloud
     simple_test_passthrough_filter
     simple_test_euclidean_cluster_extraction
+    simple_test_voxel_grid_filter
   )
 
   if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # these options will make debugging memory issues and undefined behavior easier
     # -g3 -O0 : make debugging easier using GDB
-    # -D FORTIFY_SOURCE=2 : adds memory corruption protections
-    add_compile_options(-g3 -O0 -D FORTIFY_SOURCE=2)
+    # -D _FORTIFY_SOURCE=2 : adds memory corruption protections
+    add_definitions(-D_FORTIFY_SOURCE=2)
+    add_compile_options(-g3 -O0)
 
     # Need to remove `-Wpedantic` since PCL uses constructs that are not
     # Standard compliant which produces warnings under `pedantic`
