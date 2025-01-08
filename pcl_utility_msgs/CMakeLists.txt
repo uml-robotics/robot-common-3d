@@ -28,6 +28,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/PCLConcatenatePointCloud.srv"
   "srv/PCLEuclideanClusterExtraction.srv"
   "srv/PCLPassthroughFilter.srv"
+  "srv/PCLTransformPointCloud.srv"
   DEPENDENCIES sensor_msgs
 )
 

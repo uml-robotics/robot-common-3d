@@ -58,6 +58,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED NO_MODULE)
+find_package(geometry_msgs REQUIRED)
 find_package(PCL REQUIRED)
 find_package(pcl_conversions REQUIRED)
 find_package(pcl_ros REQUIRED)
@@ -65,15 +66,21 @@ find_package(pcl_utility_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcl_interfaces REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_sensor_msgs)
 
 set(THIS_PACKAGE_DEPS
+  geometry_msgs
   PCL
   pcl_ros
   pcl_conversions
+  pcl_ros
   pcl_utility_msgs
   rclcpp
   rcl_interfaces
   sensor_msgs
+  tf2_ros
+  tf2_sensor_msgs
 )
 
 include_directories(${PCL_INCLUDE_DIRS})
@@ -88,17 +95,20 @@ add_library(${PROJECT_NAME} INTERFACE)
 add_executable(concatenate_point_cloud_service src/concatenate_point_cloud_service.cpp)
 add_executable(euclidean_cluster_extraction_service src/euclidean_cluster_extraction_service.cpp)
 add_executable(passthrough_filter_service src/passthrough_filter_service.cpp)
+add_executable(transform_point_cloud_service src/transform_point_cloud_service.cpp)
 add_executable(voxel_grid_filter_service src/voxel_grid_filter_service.cpp)
 
 ament_target_dependencies(concatenate_point_cloud_service ${THIS_PACKAGE_DEPS})
 ament_target_dependencies(euclidean_cluster_extraction_service ${THIS_PACKAGE_DEPS})
 ament_target_dependencies(passthrough_filter_service ${THIS_PACKAGE_DEPS})
+ament_target_dependencies(transform_point_cloud_service ${THIS_PACKAGE_DEPS})
 ament_target_dependencies(voxel_grid_filter_service ${THIS_PACKAGE_DEPS})
 
 set(THIS_PACKAGE_EXECS
   concatenate_point_cloud_service
   euclidean_cluster_extraction_service
   passthrough_filter_service
+  transform_point_cloud_service
   voxel_grid_filter_service
 )
 
@@ -115,21 +125,25 @@ if(BUILD_TESTING)
     rclcpp
     rcl_interfaces
     sensor_msgs
+    tf2_ros
   )
 
   add_executable(simple_test_concatenate_point_cloud src/tests/simple_test_concatenate_point_cloud.cpp)
   add_executable(simple_test_euclidean_cluster_extraction src/tests/simple_test_euclidean_cluster_extraction.cpp)
   add_executable(simple_test_passthrough_filter src/tests/simple_test_passthrough_filter.cpp)
+  add_executable(simple_test_transform_point_cloud src/tests/simple_test_transform_point_cloud.cpp)
   add_executable(simple_test_voxel_grid_filter src/tests/simple_test_voxel_grid_filter.cpp)
 
   ament_target_dependencies(simple_test_concatenate_point_cloud ${THIS_PACKAGE_TEST_DEPS})
   ament_target_dependencies(simple_test_euclidean_cluster_extraction ${THIS_PACKAGE_TEST_DEPS})
   ament_target_dependencies(simple_test_passthrough_filter ${THIS_PACKAGE_TEST_DEPS})
+  ament_target_dependencies(simple_test_transform_point_cloud ${THIS_PACKAGE_TEST_DEPS})
   ament_target_dependencies(simple_test_voxel_grid_filter ${THIS_PACKAGE_TEST_DEPS})
 
   list(APPEND THIS_PACKAGE_EXECS
     simple_test_concatenate_point_cloud
     simple_test_passthrough_filter
+    simple_test_transform_point_cloud
     simple_test_euclidean_cluster_extraction
     simple_test_voxel_grid_filter
   )
@@ -169,7 +183,7 @@ install(TARGETS
 )
 
 install(DIRECTORY launch
-  DESTINATION share/${PROJECT_NAME}/
+  DESTINATION share/${PROJECT_NAME}
 )
 
 ament_export_targets("export_${PROJECT_NAME}")
