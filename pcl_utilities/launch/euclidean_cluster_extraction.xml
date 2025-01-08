@@ -1,0 +1,13 @@
+<launch>
+    <node
+        pkg="pcl_utilities"
+        exec="euclidean_cluster_extraction_service"
+        name="euclidean_cluster_extraction"
+        namespace="robot_common_3d/pcl_utilities"
+        output="screen"
+    >
+      <param name="filters.euclidean_cluster_extraction.cluster_tolerance" value="0.02" />
+      <param name="filters.euclidean_cluster_extraction.min_cluster_size" value="100" />
+      <param name="filters.euclidean_cluster_extraction.max_cluster_size" value="25000" />
+    </node>
+</launch>
