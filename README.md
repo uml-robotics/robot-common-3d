@@ -1,4 +1,4 @@
-# robot-common-nav
+# robot-common-3d
 
 Repository for all robot generic 3d sensor code in the form of ROS 2 Packages
 
