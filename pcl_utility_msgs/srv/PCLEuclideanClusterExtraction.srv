@@ -1,3 +1,6 @@
 sensor_msgs/PointCloud2 cloud_in
+float64 cluster_tolerance 0.02
+uint32 min_cluster_size 100
+uint32 max_cluster_size 25000
 ---
 sensor_msgs/PointCloud2[] cloud_list_out

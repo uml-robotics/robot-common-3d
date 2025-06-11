@@ -1,4 +1,5 @@
 string target_frame
 sensor_msgs/PointCloud2 cloud_in
+uint32 max_transform_attempts 10
 ---
 sensor_msgs/PointCloud2 cloud_out

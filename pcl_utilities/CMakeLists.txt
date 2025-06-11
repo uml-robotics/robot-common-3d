@@ -17,7 +17,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # disable the error message associated with VLAs for now until changed
   # -Werror flag is removed due to errors involving redundent syntax,
   # anonymous structs/unions in pcl/point_types.h
-  add_compile_options(-Wall -Wextra -pedantic) # -Werror
+  add_compile_options(-Wall -Wextra -pedantic -g3) # -Werror
 endif()
 
 # This is a workaround for a issue that existed within Clang based
@@ -45,6 +45,12 @@ if((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
   endif()
 endif()
 
+add_compile_options(-fsanitize=address,leak,undefined -U__SANITIZE_ADDRESS__)
+add_link_options(-fsanitize=address,leak,undefined)
+
+# add_compile_options(-fsanitize=thread)
+# add_link_options(-fsanitize=thread)
+
 # PCL may fail to link with certain environments where
 # `PCL_ROOT` becomes set to '/'.
 # See: https://github.com/PointCloudLibrary/pcl/issues/4661
@@ -56,112 +62,103 @@ endif()
 # Fix by setting PCL_DIR to the path of the PCL cmake file:
 # set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
 
-find_package(ament_cmake REQUIRED)
-find_package(Eigen3 REQUIRED NO_MODULE)
-find_package(geometry_msgs REQUIRED)
-find_package(PCL REQUIRED)
-find_package(pcl_conversions REQUIRED)
-find_package(pcl_ros REQUIRED)
-find_package(pcl_utility_msgs REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(rcl_interfaces REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(tf2_ros REQUIRED)
-find_package(tf2_sensor_msgs)
+# ---*---*--- Find all dependency packages ---*---*--
+set(THIS_PKG_DEPS
+  ament_cmake Eigen3 geometry_msgs
+  PCL pcl_conversions pcl_ros
+  pcl_utility_msgs rclcpp rcl_interfaces
+  sensor_msgs tf2_ros tf2_sensor_msgs)
 
-set(THIS_PACKAGE_DEPS
-  geometry_msgs
-  PCL
-  pcl_ros
-  pcl_conversions
-  pcl_ros
-  pcl_utility_msgs
-  rclcpp
-  rcl_interfaces
-  sensor_msgs
-  tf2_ros
-  tf2_sensor_msgs
+foreach(PKG IN LISTS THIS_PKG_DEPS)
+  find_package(${PKG} REQUIRED)
+endforeach()
+
+# ---*--- Handle all standard files ---*---
+# These files follow a standard convention
+#   that allows them to be conventiently used
+set(THIS_PKG_EXPECTED_TARGETS
+  concatenate_point_cloud
+  euclidean_cluster_extraction
+  passthrough_filter
+  transform_point_cloud
+  voxel_grid_filter)
+
+set(THIS_PKG_EXECS)
+set(THIS_PKG_LIB_FILES)
+
+# Stores source files needed for building static libraries and executables
+foreach(EXEC IN LISTS THIS_PKG_EXPECTED_TARGETS)
+  list(APPEND THIS_PKG_LIB_FILES
+    "src/${EXEC}.cpp"
+    "include/${PROJECT_NAME}/${EXEC}.hpp")
+  add_executable(${EXEC} "src/${EXEC}.cpp")
+  list(APPEND THIS_PKG_EXECS ${EXEC})
+
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/tests/simple_test_${EXEC}.cpp")
+    add_executable(simple_test_${EXEC} "src/tests/simple_test_${EXEC}.cpp")
+    list(APPEND THIS_PKG_EXECS simple_test_${EXEC})
+  endif()
+endforeach()
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  target_compile_options(simple_test_euclidean_cluster_extraction PRIVATE "SHELL:-Wno-pedantic")
+endif()
+
+# ---*--- Special cases go here ---*---
+
+# ---*---*--- Create Static/Shared Libraries ---*---*---
+# OBJECTS compiles a common set of files that will be turned a static or
+# shared lib
+add_library(${PROJECT_NAME} ${THIS_PKG_LIB_FILES})
+
+# Recompile the code, exclude the main function from the code
+target_compile_definitions(${PROJECT_NAME} PRIVATE -DPCL_UTILITIES_IS_LIBRARY)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON) # Avoid Exporting Unneeded function from shared lib
+
+# ---*---*--- Handle All Depencencies ---*---*---
+foreach(TARGET IN LISTS THIS_PKG_EXECS PROJECT_NAME)
+  # Link in required resources
+  ament_target_dependencies(${TARGET} ${THIS_PKG_DEPS})
+
+  # Needed for PCL
+  target_include_directories(${TARGET} PRIVATE ${PCL_INCLUDE_DIRS})
+  target_compile_definitions(${TARGET} PRIVATE ${PCL_DEFINITIONS})
+  target_link_directories(${TARGET} PRIVATE ${PCL_LIBRARY_DIRS})
+
+  # Add include directory so files can find this
+  target_include_directories(${TARGET}
+    PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+    PUBLIC  "$<INSTALL_INTERFACE:include>")
+endforeach()
+
+# install launch/include directories
+install( DIRECTORY include/ DESTINATION include)
+install( DIRECTORY launch DESTINATION share/${PROJECT_NAME})
+
+# Install all executable files
+install(
+  TARGETS ${THIS_PKG_EXECS}
+  DESTINATION lib/${PROJECT_NAME})
+
+# Install the library
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include/${PROJECT_NAME}
 )
 
-include_directories(${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-# PCL_NO_PRECOMPILE is required to avoid address sanitizer issues in clang,
-# see https://github.com/PointCloudLibrary/pcl/issues/5831
-add_definitions(${PCL_DEFINITIONS} -DPCL_NO_PRECOMPILE)
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_export_dependencies(${THIS_PKG_DEPS})
 
-# build all files
-add_library(${PROJECT_NAME} INTERFACE)
-
-add_executable(concatenate_point_cloud_service src/concatenate_point_cloud_service.cpp)
-add_executable(euclidean_cluster_extraction_service src/euclidean_cluster_extraction_service.cpp)
-add_executable(passthrough_filter_service src/passthrough_filter_service.cpp)
-add_executable(transform_point_cloud_service src/transform_point_cloud_service.cpp)
-add_executable(voxel_grid_filter_service src/voxel_grid_filter_service.cpp)
-
-ament_target_dependencies(concatenate_point_cloud_service ${THIS_PACKAGE_DEPS})
-ament_target_dependencies(euclidean_cluster_extraction_service ${THIS_PACKAGE_DEPS})
-ament_target_dependencies(passthrough_filter_service ${THIS_PACKAGE_DEPS})
-ament_target_dependencies(transform_point_cloud_service ${THIS_PACKAGE_DEPS})
-ament_target_dependencies(voxel_grid_filter_service ${THIS_PACKAGE_DEPS})
-
-set(THIS_PACKAGE_EXECS
-  concatenate_point_cloud_service
-  euclidean_cluster_extraction_service
-  passthrough_filter_service
-  transform_point_cloud_service
-  voxel_grid_filter_service
-)
-
+# ---*---*--- BEGIN TESTING CODE ---*---*---
 if(BUILD_TESTING)
   # All testing and visualization files are not produced if not in
   # BUILT_TESTING. Launch files will still exist but will fail to launch nodes
-
-  set(THIS_PACKAGE_TEST_DEPS
-    Eigen3
-    PCL
-    pcl_conversions
-    pcl_ros
-    pcl_utility_msgs
-    rclcpp
-    rcl_interfaces
-    sensor_msgs
-    tf2_ros
-  )
-
-  add_executable(simple_test_concatenate_point_cloud src/tests/simple_test_concatenate_point_cloud.cpp)
-  add_executable(simple_test_euclidean_cluster_extraction src/tests/simple_test_euclidean_cluster_extraction.cpp)
-  add_executable(simple_test_passthrough_filter src/tests/simple_test_passthrough_filter.cpp)
-  add_executable(simple_test_transform_point_cloud src/tests/simple_test_transform_point_cloud.cpp)
-  add_executable(simple_test_voxel_grid_filter src/tests/simple_test_voxel_grid_filter.cpp)
-
-  ament_target_dependencies(simple_test_concatenate_point_cloud ${THIS_PACKAGE_TEST_DEPS})
-  ament_target_dependencies(simple_test_euclidean_cluster_extraction ${THIS_PACKAGE_TEST_DEPS})
-  ament_target_dependencies(simple_test_passthrough_filter ${THIS_PACKAGE_TEST_DEPS})
-  ament_target_dependencies(simple_test_transform_point_cloud ${THIS_PACKAGE_TEST_DEPS})
-  ament_target_dependencies(simple_test_voxel_grid_filter ${THIS_PACKAGE_TEST_DEPS})
-
-  list(APPEND THIS_PACKAGE_EXECS
-    simple_test_concatenate_point_cloud
-    simple_test_passthrough_filter
-    simple_test_transform_point_cloud
-    simple_test_euclidean_cluster_extraction
-    simple_test_voxel_grid_filter
-  )
-
-  if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    # these options will make debugging memory issues and undefined behavior easier
-    # -g3 -O0 : make debugging easier using GDB
-    # -D _FORTIFY_SOURCE=2 : adds memory corruption protections
-    add_definitions(-D_FORTIFY_SOURCE=2)
-    add_compile_options(-g3 -O0)
-
-    # Need to remove `-Wpedantic` since PCL uses constructs that are not
-    # Standard compliant which produces warnings under `pedantic`
-    # Use `SHELL:` prefix to avoid deduplication, if `-Wno-pedantic` is added
-    # elsewhere.
-    target_compile_options(simple_test_euclidean_cluster_extraction
-      PRIVATE "SHELL:-Wno-pedantic")
-  endif()
 
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
@@ -174,17 +171,4 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-install(TARGETS
-  ${THIS_PACKAGE_EXECS}
-  EXPORT "export_${PROJECT_NAME}"
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION lib/${PROJECT_NAME}
-)
-
-install(DIRECTORY launch
-  DESTINATION share/${PROJECT_NAME}
-)
-
-ament_export_targets("export_${PROJECT_NAME}")
 ament_package()

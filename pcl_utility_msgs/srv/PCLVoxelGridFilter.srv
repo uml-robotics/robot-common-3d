@@ -1,3 +1,6 @@
 sensor_msgs/PointCloud2 cloud_in
+float32 leaf_size_x 0.06
+float32 leaf_size_y 0.06
+float32 leaf_size_z 0.06
 ---
 sensor_msgs/PointCloud2 cloud_out
