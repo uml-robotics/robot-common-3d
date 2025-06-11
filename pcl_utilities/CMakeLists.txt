@@ -45,9 +45,11 @@ if((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
   endif()
 endif()
 
-add_compile_options(-fsanitize=address,leak,undefined -U__SANITIZE_ADDRESS__)
-add_link_options(-fsanitize=address,leak,undefined)
-
+# Example code for using sanitizers: addess/thread are mutually exclusive
+# Should undefine `__ADDRESS_SANITIZER__` since Eigen changes it's behavior and conflicts
+# with PCL code
+# add_compile_options(-fsanitize=address,leak,undefined -U__SANITIZE_ADDRESS__)
+# add_link_options(-fsanitize=address,leak,undefined)
 # add_compile_options(-fsanitize=thread)
 # add_link_options(-fsanitize=thread)
 
