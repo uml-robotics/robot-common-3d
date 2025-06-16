@@ -1,3 +1,17 @@
+# `cloud_in` must be provided by the user
+#
+# `leaf_size_z`, `leaf_size_y`, and `leaf_size_z`
+#    do not need to be set by default unless the ROS2 param
+#    `${node_name}/use_params` is set to false. `use_params` defaults
+#    to true on node startup.
+#
+#  If `use_params` is true, the default values shown here will be the
+#    default values of the ROS2 parameters. Changing these values in this
+#    message will have no effect. Modify the corresponding ROS2 parameter on
+#    the node to change this.
+#  If `use_params` if false, these fields will be used and the ROS2 parameters
+#    on the node will not.
+
 sensor_msgs/PointCloud2 cloud_in
 float32 leaf_size_x 0.06
 float32 leaf_size_y 0.06

@@ -19,7 +19,7 @@ namespace pcl_utilities::detail
  *   type T on the numeric type U.
  */
 template<typename T, typename U>
-inline constexpr std::pair<T, T> map_numeric_range()
+constexpr std::pair<T, T> map_numeric_range()
 {
   using T_limits = std::numeric_limits<T>;
   using U_limits = std::numeric_limits<U>;
@@ -58,20 +58,18 @@ inline constexpr std::pair<T, T> map_numeric_range()
  * @throw std::overflow if the number is above the maximum value of type T
  */
 template<typename T, typename U>
-inline T narrowing_cast(U number)
+T narrowing_cast(U number)
 {
   if constexpr (!std::is_same_v<T, U>|| !std::is_arithmetic_v<T>|| !std::is_arithmetic_v<U>) {
     static constexpr auto min_max = map_numeric_range<U, T>();
     if (number > min_max.second) {
       throw std::overflow_error(
-              "Unsafe numeric conversion will result "
-              "in overflow: " + std::to_string(number) +
-              " is above " + std::to_string(min_max.first));
+        "Unsafe numeric conversion will result in overflow: " +
+        std::to_string(number) + " is above " + std::to_string(min_max.first));
     } else if (number < min_max.first) {
       throw std::underflow_error(
-              "Unsafe numeric conversion will result "
-              "in underflow: " + std::to_string(number) +
-              " is below " + std::to_string(min_max.second));
+        "Unsafe numeric conversion will result in underflow: " +
+        std::to_string(number) + " is below " + std::to_string(min_max.second));
     }
   }
 

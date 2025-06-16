@@ -15,17 +15,16 @@
  *    `ros2 launch pcl_utilities concatenate_point_cloud.xml`
  */
 
-#include "pcl_utilities/concatenate_point_cloud.hpp"
-
 #include <cstddef>  // size_t
-#include <sstream>  // std::string_stream
 #include <stdexcept>  // std::runtime_error
-#include <string>  // std::string
+#include <string>  // std::string, std::tostring
 
-#include <pcl/point_cloud.h>  // pcl::PointCloud
-#include <pcl/point_types.h>  // pcl::PointXYZRGB
+#include "pcl/point_cloud.h"  // pcl::PointCloud
+#include "pcl/point_types.h"  // pcl::PointXYZRGB
 
-#include <pcl_conversions/pcl_conversions.h>  // fromROSMsg, toROSMsg
+#include "pcl_conversions/pcl_conversions.h"  // fromROSMsg, toROSMsg
+
+#include "pcl_utilities/concatenate_point_cloud.hpp"
 
 namespace pcl_utilities
 {
@@ -37,32 +36,22 @@ void concatenate_point_cloud(
   // Assert that all input_clouds have the same frame_id
   std::string frame_id;
   for (size_t i = 0; i < req.cloud_list_in.size(); ++i) {
-    const std::string current_frame_id = req.cloud_list_in[i].header.frame_id;
+    const std::string& current_frame_id = req.cloud_list_in[i].header.frame_id;
 
     if (frame_id == "") {
       frame_id = current_frame_id;
     }
 
     if (frame_id != current_frame_id) {
-      // NOTE: RCLCPP_* macros are threadsafe
-      // header.frame_id is not tracked in PCL::PointCloud, must
-      // be managed separetely by ROS for concatenation
-      // NOTE: The linter only approves of the format below
-      std::stringstream error_message;
-
-      error_message << "The point cloud at index #" << i << " has a frame_id of \""
-                    << current_frame_id << "\" which does not match the "
-                    << "the required frame_id of \"" << frame_id << "\"";
-
-      throw std::runtime_error(error_message.str());
+      throw std::runtime_error(
+        "The point cloud at index #" + std::to_string(i) + " has a frame_id of \"" +
+         current_frame_id + "\" which does not match the " +
+         "the required frame_id of \"" + frame_id + "\"");
     }
   }
 
-  pcl::PointCloud<pcl::PointXYZRGB> input_cloud;
-  pcl::PointCloud<pcl::PointXYZRGB> concatenated_cloud;
-
+  pcl::PointCloud<pcl::PointXYZRGB> input_cloud, concatenated_cloud;
   for (auto & point_cloud : req.cloud_list_in) {
-    // req.cloud_list_in[i] becomes invalidated
     pcl::fromROSMsg(point_cloud, input_cloud);
     // PointCloud::operator+= manages is_dense and timestamp feilds
     concatenated_cloud += input_cloud;
@@ -78,7 +67,7 @@ void concatenate_point_cloud(
 }  // namespace pcl_utilities
 
 #ifndef PCL_UTILITIES_IS_LIBRARY
-#include <rclcpp/utilities.hpp>  // rclcpp::init, rclcpp::shutdown
+#include "rclcpp/utilities.hpp"  // rclcpp::init, rclcpp::shutdown
 
 #include "pcl_utilities/detail/param.hpp"
 #include "pcl_utilities/detail/service_runner.hpp"
@@ -87,9 +76,10 @@ int main(int argc, char ** argv)
 {
   using SrvType = pcl_utilities::PCLConcatenatePointCloud;
   constexpr auto service_name = "concatenate_point_cloud";
+  constexpr auto node_namespace = "robot_common_3d/pcl_utilities";
 
   rclcpp::init(argc, argv);
-  pcl_utilities::ServiceRunner<SrvType> service_runner(service_name, "pcl_utilties");
+  pcl_utilities::ServiceRunner<SrvType> service_runner(service_name, node_namespace);
   service_runner.define_service(service_name, pcl_utilities::concatenate_point_cloud);
   service_runner.spin_one_thread();
   rclcpp::shutdown();

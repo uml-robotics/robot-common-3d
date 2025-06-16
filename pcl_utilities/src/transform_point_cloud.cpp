@@ -14,9 +14,6 @@
  * Usage:
  *    `ros2 launch pcl_utilities transform_point_cloud.xml`
  */
-
-#include "pcl_utilities/transform_point_cloud.hpp"
-
 #include <cstdint>    // uint32_t
 #include <stdexcept>  // std::runtime_error
 
@@ -25,6 +22,8 @@
 #include "sensor_msgs/msg/point_cloud2.hpp"  // sensor_msgs::msg::PointCloud2
 
 #include "tf2_sensor_msgs/tf2_sensor_msgs.hpp"  // tf2::doTransform
+
+#include "pcl_utilities/transform_point_cloud.hpp"
 
 namespace pcl_utilities
 {
@@ -68,17 +67,18 @@ int main(int argc, char ** argv)
 {
   using SrvType = pcl_utilities::PCLTransformPointCloud;
   constexpr auto service_name = "transform_point_cloud";
+  constexpr auto node_namespace = "robot_common_3d/pcl_utilities";
 
   rclcpp::init(argc, argv);
-  pcl_utilities::ServiceRunner<SrvType> runner(service_name, "pcl_utilties");
-  pcl_utilities::PointCloudTransformer transformer{runner.get_node()->get_clock()};
-  runner.define_service(service_name, std::ref(transformer));
-  runner.expose_request_parameters(
+  pcl_utilities::ServiceRunner<SrvType> service_runner(service_name, node_namespace);
+  pcl_utilities::PointCloudTransformer transformer{service_runner.get_node()->get_clock()};
+  service_runner.define_service(service_name, std::ref(transformer));
+  service_runner.expose_request_parameters(
     [](auto & request) {
       return std::tuple{
         pcl_utilities::Param("max_transform_attempts", &request.max_transform_attempts)};
     });
-  runner.spin_multi_thread();
+  service_runner.spin_multi_thread();
 
   rclcpp::shutdown();
 

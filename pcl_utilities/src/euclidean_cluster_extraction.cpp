@@ -16,20 +16,21 @@
  * Usage:
  *    `ros2 launch pcl_utilities concatenate_point_cloud.xml`
  */
-#include "pcl_utilities/euclidean_cluster_extraction.hpp"
 
 #include <utility>  // std::move
 #include <vector>   // std::vector
 
-#include <pcl/memory.h>  // pcl::make_shared<T, Args...>
-#include <pcl/point_cloud.h>  // pcl::PointCloud<T>
-#include <pcl/point_types.h>  // pcl::PointXYZRGB
-#include <pcl/segmentation/extract_clusters.h>  // pcl::EuclideanClusterExtraction
-#include <pcl_conversions/pcl_conversions.h>  // fromROSMsg, toROSMsg
+#include "pcl/memory.h"  // pcl::make_shared<T, Args...>
+#include "pcl/point_cloud.h"  // pcl::PointCloud<T>
+#include "pcl/point_types.h"  // pcl::PointXYZRGB
+#include "pcl/segmentation/extract_clusters.h"  // pcl::EuclideanClusterExtraction
+#include "pcl_conversions/pcl_conversions.h"  // fromROSMsg, toROSMsg
 
-#include <sensor_msgs/msg/point_cloud2.hpp>  // sensor_msgs::msg::PointCloud2
+#include "sensor_msgs/msg/point_cloud2.hpp"  // sensor_msgs::msg::PointCloud2
 
 #include "pcl_utilities/detail/numeric_utils.hpp"  // detail::narrowing_cast
+
+#include "pcl_utilities/euclidean_cluster_extraction.hpp"
 
 namespace pcl_utilities
 {
@@ -56,7 +57,6 @@ void euclidean_cluster_extraction(
   ec.extract(cluster_indices);
 
   pcl::PointCloud<pcl::PointXYZRGB> cloud_cluster;
-
   for (const pcl::PointIndices & indecies : cluster_indices) {
     cloud_cluster.clear();
 
@@ -77,7 +77,7 @@ void euclidean_cluster_extraction(
 }  // namespace pcl_utilities
 
 #ifndef PCL_UTILITIES_IS_LIBRARY
-#include <rclcpp/utilities.hpp>
+#include "rclcpp/utilities.hpp"
 
 #include "pcl_utilities/detail/param.hpp"
 #include "pcl_utilities/detail/service_runner.hpp"
@@ -86,11 +86,12 @@ int main(int argc, char ** argv)
 {
   using SrvType = pcl_utilities::PCLEuclideanClusterExtraction;
   constexpr auto service_name = "euclidean_cluster_extraction";
+  constexpr auto node_namespace = "robot_common_3d/pcl_utilities";
 
   rclcpp::init(argc, argv);
-  pcl_utilities::ServiceRunner<SrvType> runner(service_name);
-  runner.define_service(service_name, pcl_utilities::euclidean_cluster_extraction);
-  runner.expose_request_parameters(
+  pcl_utilities::ServiceRunner<SrvType> service_runner(service_name, node_namespace);
+  service_runner.define_service(service_name, pcl_utilities::euclidean_cluster_extraction);
+  service_runner.expose_request_parameters(
     [](auto & request) {
       std::string prefix = "filters.euclidean_cluster_extraction.";
 
@@ -99,7 +100,7 @@ int main(int argc, char ** argv)
         pcl_utilities::Param(prefix + "max_cluster_size", &request.max_cluster_size),
         pcl_utilities::Param(prefix + "cluster_tolerance", &request.cluster_tolerance)};
     });
-  runner.spin_multi_thread();
+  service_runner.spin_multi_thread();
 
   rclcpp::shutdown();
 

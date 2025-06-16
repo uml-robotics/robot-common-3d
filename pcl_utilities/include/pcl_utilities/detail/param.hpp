@@ -10,11 +10,11 @@
 #include <utility>  // std::move<T>, std::forward<T>
 #include <vector>  // std::vector<T>
 
-#include <rclcpp/parameter_value.hpp> // rclcpp::ParameterValue
+#include "rclcpp/parameter_value.hpp" // rclcpp::ParameterValue
 
-#include <rcl_interfaces/msg/floating_point_range.hpp>  // rcl_interfaces::msg::FloatingPointRange
-#include <rcl_interfaces/msg/integer_range.hpp>  // rcl_interfaces::msg::IntegerRange
-#include <rcl_interfaces/msg/parameter_descriptor.hpp>  // ParameterDescriptor
+#include "rcl_interfaces/msg/floating_point_range.hpp"  // rcl_interfaces::msg::FloatingPointRange
+#include "rcl_interfaces/msg/integer_range.hpp"  // rcl_interfaces::msg::IntegerRange
+#include "rcl_interfaces/msg/parameter_descriptor.hpp"  // ParameterDescriptor
 
 #include "pcl_utilities/detail/numeric_utils.hpp"  // map_numeric_range<T, U>, narrowing_cast<T, U>
 
@@ -46,6 +46,7 @@ public:
 
 /**
  * @brief Associates a ROS2 Parameter with a service request field.
+ * @note This class is not inheritable. This may be changed later.
  *
  * @tparam T type of the request field, cannot be `std::vector<int>`
  *   or `std::vector<float>`
@@ -54,7 +55,7 @@ public:
  *   guarenteed to be true
  **/
 template<typename T>
-class Param : public detail::GenericParam
+class Param final: public detail::GenericParam
 {
   static_assert(!std::is_same_v<T, std::vector<int>>, "T cannot be std::vector<int>");
   static_assert(!std::is_same_v<T, std::vector<float>>, "T cannot be std::vector<float>");
@@ -96,7 +97,7 @@ public:
   /**
    * @note The Type T (CTAD) is the type of the request field, cannot be
    *   `std::vector<int>` or `std::vector<float>`
-   * @param name The name of the  service
+   * @param parameter_name The name of the associated parameter
    * @param[in,out] value_ptr A pointer to the field that will be provide
    *  a default value when declaring parameters and be stored into when reading
    * @param descriptor Defaults to a descriptor that safely bounds integer ranges.
@@ -104,30 +105,30 @@ public:
    *  See `get_default_contraint` for more information.
   */
   Param(
-    const std::string & name, T * value_ptr,
+    const std::string & parameter_name, T * value_ptr,
     rcl_interfaces::msg::ParameterDescriptor descriptor = get_default_constraint())
-  : name_{name}, value_{*value_ptr}, descriptor_{descriptor} {}
+  : name_{parameter_name}, value_{*value_ptr}, descriptor_{descriptor} {}
 
   void from_parameter_value(const rclcpp::ParameterValue & parameter) override
   {
     value_ = detail::narrowing_cast<T>(parameter.get<ParamT>());
   }
 
-  rclcpp::ParameterValue to_parameter_value() final
+  rclcpp::ParameterValue to_parameter_value() override
   {
     return rclcpp::ParameterValue{detail::narrowing_cast<ParamT>(value_)};
   }
 
-  const rcl_interfaces::msg::ParameterDescriptor & get_constraint() const final
+  const rcl_interfaces::msg::ParameterDescriptor & get_constraint() const override
   {
     return descriptor_;
   }
 
-  const std::string & get_name() const final {return name_;}
+  const std::string & get_name() const override {return name_;}
 
-  std::any move_into_any() final {return std::make_any<T>(std::move(value_));}
+  std::any move_into_any() override {return std::make_any<T>(std::move(value_));}
 
-  void from_any(std::any && value) final {value_ = std::any_cast<T>(std::move(value));}
+  void from_any(std::any && value) override {value_ = std::any_cast<T>(std::move(value));}
 
   std::unique_ptr<GenericParam> erase_type()
   {
@@ -136,8 +137,7 @@ public:
 };
 
 template<typename T>
-// Explicit CTAD Guide
-Param(T)->Param<T>;
+Param(T)->Param<T>; // Explicit CTAD Guide
 
 }  // namespace pcl_utilities::detail
 

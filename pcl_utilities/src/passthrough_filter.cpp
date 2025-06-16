@@ -15,15 +15,15 @@
  * Usage:
  *    `ros2 launch pcl_utilities passthrough_filter.xml`
  */
-#include "pcl_utilities/passthrough_filter.hpp"
-
-#include <memory>   // std::make_shared
+#include <memory>  // std::make_shared
 #include <utility>  //  std::pair, std::tuple
 
 #include "pcl/filters/passthrough.h"  // pcl::PassthroughFilter
 #include "pcl/point_cloud.h"  // pcl::PointCloud
 #include "pcl/point_types.h"  // pcl::PointXYZRGB
 #include "pcl_conversions/pcl_conversions.h"  // fromROSMsg, toROSMsg
+
+#include "pcl_utilities/passthrough_filter.hpp"
 
 namespace pcl_utilities
 {
@@ -60,7 +60,7 @@ void passthrough_filter(
 }  // namespace pcl_utilities
 
 #ifndef PCL_UTILITIES_IS_LIBRARY
-#include <rclcpp/utilities.hpp>
+#include "rclcpp/utilities.hpp"
 
 #include "pcl_utilities/detail/service_runner.hpp"
 
@@ -68,12 +68,13 @@ int main(int argc, char ** argv)
 {
   using SrvType = pcl_utilities::PCLPassthroughFilter;
   constexpr auto service_name = "passthrough_filter";
+  constexpr auto node_namespace = "robot_common_3d/pcl_utilities";
 
   rclcpp::init(argc, argv);
 
-  pcl_utilities::ServiceRunner<SrvType> runner(service_name, "pcl_utilties");
-  runner.define_service(service_name, pcl_utilities::passthrough_filter);
-  runner.expose_request_parameters(
+  pcl_utilities::ServiceRunner<SrvType> service_runner(service_name, node_namespace);
+  service_runner.define_service(service_name, pcl_utilities::passthrough_filter);
+  service_runner.expose_request_parameters(
     [](auto & request) {
       std::string prefix = "filters.passthrough.";
 
@@ -85,7 +86,7 @@ int main(int argc, char ** argv)
         pcl_utilities::Param(prefix + "z_min", &request.z_min),
         pcl_utilities::Param(prefix + "z_max", &request.z_max)};
     });
-  runner.spin_multi_thread();
+  service_runner.spin_multi_thread();
 
   rclcpp::shutdown();
 
