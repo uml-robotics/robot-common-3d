@@ -1,14 +1,15 @@
 cmake_minimum_required(VERSION 3.8)
 project(pcl_utilities)
 
-# This code should not be compiled with `-Ofast` or `-ffastmath`
-# for the following reasons:
-#  - These utilities rely on IEEE 754 Compliance.
-#  - PCL uses floating point operations internally, and enabling these
-#    flags can result in unexpected behavior in client code.
-#
-# It is the users responsibility to add the appropriate flags on
-# non Clang/GNU-based compilers (including. non-posix frontend variants.)
+#[[ This code should not be compiled with `-Ofast` or `-ffastmath`
+for the following reasons:
+ - These utilities rely on IEEE 754 Compliance.
+ - PCL uses floating point operations internally, and enabling these
+   flags can result in unexpected behavior in client code.
+
+It is the users responsibility to add the appropriate flags on
+non Clang/GNU-based compilers (including. non-posix frontend variants.)
+]]
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
@@ -23,14 +24,14 @@ endif()
 set(IS_COMPILER_CXX_GNU false)
 set(IS_COMPILER_CXX_CLANG false)
 
-if (
+if(
   CMAKE_CXX_COMPILER_ID MATCHES ".*(Clang|LLVM).*" AND
   NOT CMAKE_CXX_COMPILER_FRONTEND_VARIANT EQUAL "MSVC"
 )
   set(IS_COMPILER_CXX_CLANG true)
 endif()
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   set(IS_COMPILER_CXX_GNU true)
 endif()
 
@@ -41,21 +42,24 @@ if(IS_COMPILER_CXX_GNU OR IS_COMPILER_CXX_CLANG)
   add_compile_options(-Wall -Wextra -pedantic) # -Werror
 endif()
 
-# ---*---*--- Boost Error Workaround ---*---*---
-# This is a workaround for a issue that existed within Clang based
-# compilers and BOOST MPL. BOOST MPL invoked undefined behavior by
-# casting an integer to an enum value that does not exist. PCL uses
-# Boost MPL so many header files do not compile. This bug was patched
-# for Boost 1.86.0.
-#
-# See for more info: https://github.com/boostorg/mpl/issues/69
-#
-# In Clang Versions >= 20, this error cannot be supressed,
-#   - At the time of reading, you shoud check for an apt package
-#     with a correct version.
-#   - Then you either need to source install boost or patch the
-#     header manually. See: https://github.com/boostorg/mpl/pull/77/files/8499ae7e4ff0cf798367ebe6ea9fb991aa43db6c#diff-49c45a857bb9eaf779f64be204dc1ca6cfdf3801775428c03acfabf8104fe25d
-#     for what changes need to be made.
+#[[ ---*---*--- Boost Error Workaround ---*---*---
+This is a workaround for a issue that existed within Clang based
+compilers and BOOST MPL. BOOST MPL invoked undefined behavior by
+casting an integer to an enum value that does not exist. PCL uses
+Boost MPL so many header files do not compile. This bug was patched
+for Boost 1.86.0.
+
+See for more info: https://github.com/boostorg/mpl/issues/69
+
+In Clang Versions >= 20, this error cannot be supressed. You have 3 options:
+  -  At the time of reading, you shoud check for an apt package
+    with a correct version.
+  - Source install a correct version of boost, beware that linking against files
+    with another version of boost may trigger ODR violations at link time.
+  - Patch the header manually: https://github.com/boostorg/mpl/pull/77/files/8499ae7e4ff0cf798367ebe6ea9fb991aa43db6c
+#diff-49c45a857bb9eaf779f64be204dc1ca6cfdf3801775428c03acfabf8104fe25d
+  for what changes need to be made.
+]]
 if(IS_COMPILER_CXX_CLANG)
   find_package(Boost)
   if(Boost_FOUND AND Boost_VERSION VERSION_LESS_EQUAL 1.86.0)
@@ -63,62 +67,64 @@ if(IS_COMPILER_CXX_CLANG)
   endif()
 endif()
 
-# ---*---*--- Add Sanitizers ---*---*---
-# In order to use these sanitizers for testing, apply the following steps:
-#   - These are for DEBUGGING only, never use for hardening a binary (except for
-#     safe-stack, cfi, and )
-#   - Asan and Tsan cannot be used together
-#   - If using Asan, also add `-U__ADDRESS_SANITIZER__`, Eigen changes its
-#     allocation scheme if Asan is in use, which creates conflicts with PCL
-#     library code leading to a SIGSEGV.
-#   - If you see errors about unmapped memory regions or repeated messages
-#     [DEADLY SIGNAL] from Asan. The number of bits for Asan are
-#     above what is handleable for sanitizers
-#        - Launch with `ros2 launch --launch-prefix='setarch --addr-no-randomize'`
-#        - Run With `ros2 run --prefix='setarch --addr-no-randomize'`
-#   - Asan raises an error with a known issue in ROS2 has a known error with deleting 
-#     pointers with the wrong type, this is irrelevent for linux using the default allocator.
-#     You can disable it with `export ASAN_OPTIONS=new_delete_type_mismatch=0`
-#   - Tsan expects all dependencies to be compiled with Tsan, we don't do that
-#     You can ignore all mutex and signal errors that are not from the current
-#     executable. In order to reduce error messages, only leave race conditions
-#     detected: `export TSAN_OPTIONS=report_signal_unsafe=0:report_mutex_bugs=0:report_destroy_locked=0:detect_deadlocks=0`
-#   - Nsan only works with Clang++ version >= 20, useful for idenfitying accumationg
-#     floating point precision issues in code You need to use `-DPCL_NO_PRECOMPILE`
-#     to detect issues in PCL code. These detections are not bugs but may require
-#     more attention.
-#  For more information go to:
-#     Tutorial / Nsan: https://www.intel.com/content/www/us/en/developer/articles/technical/find-bugs-quickly-using-sanitizers-with-oneapi-compiler.html
-#     Asan:  https://github.com/google/sanitizers/wiki/AddressSanitizer
-#            https://clang.llvm.org/docs/AddressSanitizer.html
-#     Lsan:  https://github.com/google/sanitizers/wiki/AddressSanitizerLeakSanitizer
-#     Ubsan: https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
-#     Tsan:  https://github.com/google/sanitizers/wiki/threadsanitizercppmanual
-#
-if (IS_COMPILER_CXX_GNU OR IS_COMPILER_CXX_CLANG)
-  message("Building \"${PROJECT_NAME}\" with sanitizers")
+#[[ ---*---*--- Add Sanitizers ---*---*---
+In order to use these sanitizers for testing, apply the following steps:
+  - These are for DEBUGGING only, never use for hardening a binary (except for
+    safe-stack, cfi, and )
+  - Asan and Tsan cannot be used together
+  - If using Asan, also add `-U__ADDRESS_SANITIZER__`, Eigen changes its
+    allocation scheme if Asan is in use, which creates conflicts with PCL
+    library code leading to a SIGSEGV.
+  - If you see errors about unmapped memory regions or repeated messages
+    [DEADLY SIGNAL] from Asan. The number of bits for Asan are
+    above what is handleable for sanitizers
+      - Launch with `ros2 launch --launch-prefix='setarch --addr-no-randomize'`
+      - Run With `ros2 run --prefix='setarch --addr-no-randomize'`
+  - Asan raises an error with a known issue in ROS2 has a known error with deleting
+    pointers with the wrong type, this is irrelevent for linux using the default allocator.
+    You can disable it with `export ASAN_OPTIONS=new_delete_type_mismatch=0`
+  - Tsan expects all dependencies to be compiled with Tsan, we don't do that
+    You can ignore all mutex and signal errors that are not from the current
+    executable. In order to reduce error messages, only leave race conditions
+    detected: `export TSAN_OPTIONS=report_signal_unsafe=0:report_mutex_bugs=0:report_destroy_locked=0:detect_deadlocks=0`
+  - Nsan only works with Clang++ version >= 20, useful for idenfitying accumationg
+    floating point precision issues in code You need to use `-DPCL_NO_PRECOMPILE`
+    to detect issues in PCL code. These detections are not bugs but may require
+    more attention is percision is of high imporantance, though these warnings will
+    infrequently be problematic.
+For more information go to:
+    Tutorial / Nsan: https://www.intel.com/content/www/us/en/developer/articles/technical/
+find-bugs-quickly-using-sanitizers-with-oneapi-compiler.html
+    Asan: https://github.com/google/sanitizers/wiki/AddressSanitizer
+          https://clang.llvm.org/docs/AddressSanitizer.html
+    Lsan: https://github.com/google/sanitizers/wiki/AddressSanitizerLeakSanitizer
+    Ubsan: https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+    Tsan: https://github.com/google/sanitizers/wiki/threadsanitizercppmanual
+]]
+# if (IS_COMPILER_CXX_GNU OR IS_COMPILER_CXX_CLANG)
+#   message("Building \"${PROJECT_NAME}\" with sanitizers")
 
-  add_compile_options(-g3)
+#   add_compile_options(-g3)
 
-  # add_compile_options(-fsanitize=address,leak,undefined -U__SANITIZE_ADDRESS__)
-  # add_link_options(-fsanitize=address,leak,undefined)
-  # <OR>
-  add_compile_options(-fsanitize=thread)
-  add_link_options(-fsanitize=thread)
-  # <OR> (>=clang++-20)
-  # add_definitions(-DPCL_NO_PRECOMPILE)
-  # add_compile_options(-fsanitize=numerical)
-  # add_link_options(-fsanitize=numerical)
-endif()
+#   # add_compile_options(-fsanitize=address,leak,undefined -U__SANITIZE_ADDRESS__)
+#   # add_link_options(-fsanitize=address,leak,undefined)
+#   # <OR>
+#   # add_compile_options(-fsanitize=thread)
+#   # add_link_options(-fsanitize=thread)
+#   # <OR> (>=clang++-20)
+#   # add_definitions(-DPCL_NO_PRECOMPILE)
+#   # add_compile_options(-fsanitize=numerical)
+#   # add_link_options(-fsanitize=numerical)
+# endif()
 
-# PCL may fail to link with certain environments where
-# `PCL_ROOT` becomes set to '/'.
-# See: https://github.com/PointCloudLibrary/pcl/issues/4661
-#
-# If PCL is not found:
-# - check if PCL is installed
-# - check PCL_ROOT is not '/' with: `variable_watch(PCL_ROOT)`
-#
+#[[PCL may fail to link with certain environments where
+`PCL_ROOT` becomes set to '/'.
+See: https://github.com/PointCloudLibrary/pcl/issues/4661
+
+If PCL is not found:
+- check if PCL is installed
+- check PCL_ROOT is not '/' with: `variable_watch(PCL_ROOT)`
+]]
 # Fix by setting PCL_DIR to the path of the PCL cmake file:
 # set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
 
@@ -152,7 +158,7 @@ foreach(EXEC IN LISTS THIS_PKG_EXPECTED_TARGETS)
   add_executable(${EXEC} "src/${EXEC}.cpp")
   list(APPEND THIS_PKG_EXECS ${EXEC})
 
-  if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/${EXEC}.hpp")
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/${EXEC}.hpp")
     list(APPEND THIS_PKG_LIB_FILES "include/${PROJECT_NAME}/${EXEC}.hpp")
   endif()
 

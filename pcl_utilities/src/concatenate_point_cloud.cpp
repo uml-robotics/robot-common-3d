@@ -36,7 +36,7 @@ void concatenate_point_cloud(
   // Assert that all input_clouds have the same frame_id
   std::string frame_id;
   for (size_t i = 0; i < req.cloud_list_in.size(); ++i) {
-    const std::string& current_frame_id = req.cloud_list_in[i].header.frame_id;
+    const std::string & current_frame_id = req.cloud_list_in[i].header.frame_id;
 
     if (frame_id == "") {
       frame_id = current_frame_id;
@@ -44,9 +44,9 @@ void concatenate_point_cloud(
 
     if (frame_id != current_frame_id) {
       throw std::runtime_error(
-        "The point cloud at index #" + std::to_string(i) + " has a frame_id of \"" +
-         current_frame_id + "\" which does not match the " +
-         "the required frame_id of \"" + frame_id + "\"");
+              "The point cloud at index #" + std::to_string(i) + " has a frame_id of \"" +
+              current_frame_id + "\" which does not match the " +
+              "the required frame_id of \"" + frame_id + "\"");
     }
   }
 

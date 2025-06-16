@@ -55,7 +55,7 @@ public:
  *   guarenteed to be true
  **/
 template<typename T>
-class Param final: public detail::GenericParam
+class Param final : public detail::GenericParam
 {
   static_assert(!std::is_same_v<T, std::vector<int>>, "T cannot be std::vector<int>");
   static_assert(!std::is_same_v<T, std::vector<float>>, "T cannot be std::vector<float>");

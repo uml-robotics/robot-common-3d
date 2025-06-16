@@ -64,12 +64,12 @@ T narrowing_cast(U number)
     static constexpr auto min_max = map_numeric_range<U, T>();
     if (number > min_max.second) {
       throw std::overflow_error(
-        "Unsafe numeric conversion will result in overflow: " +
-        std::to_string(number) + " is above " + std::to_string(min_max.first));
+              "Unsafe numeric conversion will result in overflow: " +
+              std::to_string(number) + " is above " + std::to_string(min_max.first));
     } else if (number < min_max.first) {
       throw std::underflow_error(
-        "Unsafe numeric conversion will result in underflow: " +
-        std::to_string(number) + " is below " + std::to_string(min_max.second));
+              "Unsafe numeric conversion will result in underflow: " +
+              std::to_string(number) + " is below " + std::to_string(min_max.second));
     }
   }
 
