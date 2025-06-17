@@ -1,3 +1,4 @@
+# cloud_list_in must be provided by the user
 sensor_msgs/PointCloud2[] cloud_list_in
 ---
 sensor_msgs/PointCloud2 cloud_out

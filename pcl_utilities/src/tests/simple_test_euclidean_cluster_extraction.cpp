@@ -24,53 +24,55 @@
  *      `euclidan_cluster_extraction/cloud_concatenated`
  *
  * Usage:
- *    `ros2 launch pcl_utilities test_euclidan_cluster_extraction.xml point_cloud_topic:=<POINT_CLOUD_TOPIC>`
+ *    `ros2 launch pcl_utilities test_euclidan_cluster_extraction.xml
+ * point_cloud_topic:=<POINT_CLOUD_TOPIC>`
  */
 
 #include <algorithm>  // std::min
-#include <cassert>  // assert
 #include <chrono>  // std::chrono::seconds
 #include <cstddef>  // size_t
 #include <cstdint>  // uint8_t
 #include <memory>  // std::make_shared
-#include <string>  // std::string
+#include <string>   // std::string
 #include <utility>  // std::move
 
-#include <Eigen/Core>  // Eigen::Vector4f
+#include "rclcpp/executors.hpp"  // rclcpp::spin_until_future_complete
+#include "rclcpp/logging.hpp"  // RCLCPP_ERROR_STREAM
+#include "rclcpp/node.hpp"  // rclcpp::node
+#include "rclcpp/publisher.hpp"  // rclcpp::Publisher<SrvT>
+#include "rclcpp/utilities.hpp"  // rclcpp::init, rclcpp::shutdown
+#include "rclcpp/wait_for_message.hpp"  // rclcpp::wait_for_message<MsgT>
 
-#include <pcl/filters/crop_box.h>
-#include <pcl/filters/voxel_grid.h>
+#include "Eigen/Core"  // Eigen::Vector4f
 
-#include <rclcpp/executors.hpp>
-#include <rclcpp/logger.hpp>
-#include <rclcpp/logging.hpp>
-#include <rclcpp/node.hpp>
-#include <rclcpp/publisher.hpp>
-#include <rclcpp/wait_for_message.hpp>
+#include "pcl_conversions/pcl_conversions.h"  // fromROSMsg, toROSMsg
 
-#include <pcl/pcl_config.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/point_types_conversion.h>
-#include <pcl_conversions/pcl_conversions.h>
+#include "pcl/filters/crop_box.h" // pcl::CropBox<PointT>
+#include "pcl/filters/voxel_grid.h" // pcl::VoxelGrid<PointT>
+#include "pcl/memory.h"  // pcl::make_shared<T, Args...>
+#include "pcl/point_cloud.h"  // pcl::PointCloud<PointT>
+#include "pcl/point_types.h"  // pcl::PointXYZRGB, pcl::PointXYZHSV
+#include "pcl/point_types_conversion.h"  // pcl::PointXYZHSVtoXYZRGB
 
-#include <sensor_msgs/msg/point_cloud2.hpp>
+#include "pcl_utility_msgs/srv/pcl_euclidean_cluster_extraction.hpp" // pcl_utility_msgs::srv::PCLEucideanClusterExtraction
 
-#include "pcl_utility_msgs/srv/pcl_euclidean_cluster_extraction.hpp"
+#include "sensor_msgs/msg/point_cloud2.hpp"  // sensor_msgs::msg::PointCloud
+
+#include "pcl_utilities/detail/numeric_utils.hpp"  // pcl_utilities::detail::narrowing_cast
 
 using pcl_utility_msgs::srv::PCLEuclideanClusterExtraction;
 using ROSPointCloud2 = sensor_msgs::msg::PointCloud2;
+using pcl_utilities::detail::narrowing_cast;
 
 namespace
 {
-constexpr std::chrono::seconds kMaxWaitTime {5U};
+constexpr std::chrono::seconds kMaxWaitTime{5U};
 float lerp_float(float first, float second, float factor);
 
 class TestEuclidanClusterExtractionNode : public rclcpp::Node
 {
 private:
-  rclcpp::Client<PCLEuclideanClusterExtraction>::SharedPtr
-    euclidan_cluster_extraction_client_;
+  rclcpp::Client<PCLEuclideanClusterExtraction>::SharedPtr euclidan_cluster_extraction_client_;
   rclcpp::Publisher<ROSPointCloud2>::SharedPtr output_publisher_;
   std::string camera_topic_;
 
@@ -78,15 +80,13 @@ public:
   TestEuclidanClusterExtractionNode()
   : rclcpp::Node("simple_test_euclidan_cluster_extraction")
   {
-    std::string client_topic = declare_parameter<std::string>(
-      "node_client_name");
+    std::string client_topic = declare_parameter<std::string>("node_client_name");
     camera_topic_ = declare_parameter<std::string>("point_cloud_topic");
 
     euclidan_cluster_extraction_client_ =
       create_client<PCLEuclideanClusterExtraction>(client_topic);
 
-    output_publisher_ = create_publisher<ROSPointCloud2>(
-      "euclidan_cluster_extraction/clusters", 1);
+    output_publisher_ = create_publisher<ROSPointCloud2>("euclidan_cluster_extraction/clusters", 1);
   }
 
   void spin()
@@ -95,13 +95,11 @@ public:
 
     while (rclcpp::ok()) {
       bool was_retrieved = rclcpp::wait_for_message(
-        point_cloud_message, shared_from_this(),
-        camera_topic_, kMaxWaitTime);
+        point_cloud_message, shared_from_this(), camera_topic_, kMaxWaitTime);
 
       if (!was_retrieved) {
         RCLCPP_ERROR_STREAM(
-          get_logger(),
-          "A camera message could not be retrieved within 1 second.");
+          get_logger(), "A camera message could not be retrieved within 1 second.");
         continue;
       }
 
@@ -128,22 +126,20 @@ public:
     auto request = std::make_shared<PCLEuclideanClusterExtraction::Request>();
     request->cloud_in = std::move(point_cloud);
 
-    auto response_future =
-      euclidan_cluster_extraction_client_->async_send_request(request);
+    auto response_future = euclidan_cluster_extraction_client_->async_send_request(request);
 
-    auto response_code = rclcpp::spin_until_future_complete(
-      shared_from_this(), response_future, kMaxWaitTime);
+    auto response_code =
+      rclcpp::spin_until_future_complete(shared_from_this(), response_future, kMaxWaitTime);
 
     if (response_code != rclcpp::FutureReturnCode::SUCCESS) {
       RCLCPP_ERROR_STREAM(get_logger(), "Failed to recieve a response from the service");
       return;
     }
 
-    std::shared_ptr response {response_future.get()};
+    std::shared_ptr response{response_future.get()};
     output_publisher_->publish(
       colorize_concatenate_point_clouds(
-        std::move(response->cloud_list_out),
-        std::move(request->cloud_in.header.frame_id)));
+        std::move(response->cloud_list_out), std::move(request->cloud_in.header.frame_id)));
   }
 
   /**
@@ -158,20 +154,21 @@ public:
     // Create a box of 0.5m x 0.5m x 1.0m. Depth of 1m.
     // Downsample the point cloud by aggregating voxels for every point within
     // 0.25mm. Note that these variables must not be given a static lifetime
-    // since Eigen::Vector<N>f is not guarenteed to be trivially constructable by constexpr
-    const Eigen::Vector4f kBoxCoordinatesMin {-0.25f, -0.25f, 0.f, 0.f};
-    const Eigen::Vector4f kBoxCoordinatesMax {0.25f, 0.25f, 1.f, 0.f};
-    const Eigen::Vector4f kVoxelGridLeafSize {0.003f, 0.003f, 0.003f, 0.f};
+    // since Eigen::Vector<N>f is not guarenteed to be trivially constructable
+    // by constexpr
+    const Eigen::Vector4f kBoxCoordinatesMin{-0.25f, -0.25f, 0.f, 0.f};
+    const Eigen::Vector4f kBoxCoordinatesMax{0.25f, 0.25f, 1.f, 0.f};
+    const Eigen::Vector4f kVoxelGridLeafSize{0.003f, 0.003f, 0.003f, 0.f};
 
     if (point_cloud.data.empty()) {
       return;
     }
 
-    auto pcl_point_cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
+    auto pcl_point_cloud = pcl::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
     pcl::moveFromROSMsg(point_cloud, *pcl_point_cloud);
 
-    // Crop the point cloud, more points further away from the camera are removed
-    // This step has the greatest effect reducing points
+    // Crop the point cloud, more points further away from the camera are
+    // removed This step has the greatest effect reducing points
     pcl::CropBox<pcl::PointXYZRGB> crop_box;
     crop_box.setMax(kBoxCoordinatesMax);
     crop_box.setMin(kBoxCoordinatesMin);
@@ -192,33 +189,33 @@ public:
     pcl::toROSMsg(*pcl_point_cloud, point_cloud);
   }
 
-
   /**
    * Given a list of point clouds, apply a distinct colored tint to
    * each point cloud, then concatenate all point clouds into one final
    * resulting point cloud.
    *
-   * @param point_clouds sensor_msgs/PointCloud2[] message to be colorized/concatenated.
+   * @param point_clouds sensor_msgs/PointCloud2[] message to be
+   * colorized/concatenated.
    * @param frame_id the frame ID of the final point cloud
    */
   ROSPointCloud2 colorize_concatenate_point_clouds(
     std::vector<ROSPointCloud2> point_clouds, std::string frame_id)
   {
-    constexpr float kTintColorWeight = 0.2f; // 60 out of 255, weight in [0.0f, 1.0f]
-    constexpr size_t kMaxNumClusters = 20U; // 18 degree minimum hue-step out of 360 per cluster
+    constexpr float kTintColorWeight = 0.2f;  // 60 out of 255, weight in [0.0f, 1.0f]
+    constexpr size_t kMaxNumClusters = 20U;   // 18 degree minimum hue-step out of 360 per cluster
 
     pcl::PointCloud<pcl::PointXYZRGB> pcl_temp_point_cloud;
     pcl::PointCloud<pcl::PointXYZRGB> pcl_concatenated_point_cloud;
 
     // HSV order, H in [0,360.f], S in [0.f, 1.f], V in [0.f, 1.f]
-    pcl::PointXYZHSV hsv_color_tint {0.0f, 1.0f, 1.0f};
+    pcl::PointXYZHSV hsv_color_tint{0.0f, 1.0f, 1.0f};
     pcl::PointXYZRGB rgb_color_tint;
 
     size_t num_clusters = std::min(point_clouds.size(), kMaxNumClusters);
 
     for (size_t i = 0; i < num_clusters; i++) {
-      // Adjust the hue of the point so there will be apparent differences in color
-      // between the clusters
+      // Adjust the hue of the point so there will be apparent differences in
+      // color between the clusters
       hsv_color_tint.h = 360.0f * float(i) / float(num_clusters);
 
       pcl::PointXYZHSVtoXYZRGB(hsv_color_tint, rgb_color_tint);
@@ -226,20 +223,20 @@ public:
 
       for (pcl::PointXYZRGB & point : pcl_temp_point_cloud) {
         // Lerp the current point color with the tinted point
-        // (r, g, b) <= 255.0 + epsilon. Where epsilon is truncated via the proceeding cast.
+        // (r, g, b) <= 255.0 + epsilon. Where epsilon is truncated via the
+        // proceeding cast.
         float r = lerp_float(float(rgb_color_tint.r), float(point.r), kTintColorWeight);
         float g = lerp_float(float(rgb_color_tint.g), float(point.g), kTintColorWeight);
         float b = lerp_float(float(rgb_color_tint.b), float(point.b), kTintColorWeight);
 
-
         // The values above will fit within uint8_t
-        // as long as (1) 0.0 <= COLOR_RANGE <= 1.0 and (2) the size of each channel in
-        // PointRGBXYZ is at most 1 byte
-        // PCL uses overlapping union members to define color, this is considered UB but
-        // there is no way around it: see https://github.com/PointCloudLibrary/pcl/issues/2303
+        // as long as (1) 0.0 <= COLOR_RANGE <= 1.0 and (2) the size of each
+        // channel in PointRGBXYZ is at most 1 byte PCL uses overlapping union
+        // members to define color, this is considered UB but there is no way
+        // around it: see https://github.com/PointCloudLibrary/pcl/issues/2303
         point = pcl::PointXYZRGB(
-          point.x, point.y, point.z, static_cast<uint8_t>(r),
-          static_cast<uint8_t>(g), static_cast<uint8_t>(b));
+          point.x, point.y, point.z, narrowing_cast<uint8_t>(r), narrowing_cast<uint8_t>(g),
+          narrowing_cast<uint8_t>(b));
       }
 
       // concatenate the colorized point cluster into one point cloud
@@ -256,8 +253,6 @@ public:
 
 float lerp_float(float first, float second, float factor)
 {
-  assert(factor >= 0.0f && factor <= 1.0f);
-
   return factor * first + (1.0f - factor) * second;
 }
 

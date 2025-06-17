@@ -17,38 +17,40 @@
  *   `transform_point_cloud/cloud_transformed`
  *
  * Usage:
- *    `ros2 launch pcl_utilities test_transform_point_cloud.xml point_cloud_topic:=<POINT_CLOUD_TOPIC>`
+ *    `ros2 launch pcl_utilities test_transform_point_cloud.xml
+ * point_cloud_topic:=<POINT_CLOUD_TOPIC>`
  */
-#include <chrono>   // std::chrono::seconds
+#include <chrono>  // std::chrono::seconds
 #include <memory>  // std::make_shared
 #include <string>
 #include <utility>  // std::move
 
-#include "rclcpp/executors.hpp"
-#include "rclcpp/logger.hpp"
-#include "rclcpp/logging.hpp"
-#include "rclcpp/node.hpp"
-#include "rclcpp/publisher.hpp"
-#include "rclcpp/wait_for_message.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
+#include "rclcpp/logging.hpp"  // RCLCPP_ERROR_STREAM
+#include "rclcpp/node.hpp"  // rclcpp::node
+#include "rclcpp/publisher.hpp"  // rclcpp::Publisher<SrvT>
+#include "rclcpp/wait_for_message.hpp"  // rclcpp::wait_for_message<MsgT>
+#include "rclcpp/executors.hpp"  // rclcpp::spin_until_future_complete
+#include "rclcpp/utilities.hpp"  // rclcpp::init, rclcpp::shutdown
 
-#include "tf2_ros/transform_broadcaster.h"
+#include "geometry_msgs/msg/transform_stamped.hpp"  // geometry_msgs::msg::TransformedStamped
 
-#include "pcl_utility_msgs/srv/pcl_transform_point_cloud.hpp"
+#include "pcl_utility_msgs/srv/pcl_transform_point_cloud.hpp"  // pcl_utility_msgs::srv::PCLTransformPointCloud
 
+#include "sensor_msgs/msg/point_cloud2.hpp"  // sensor_msgs::msg::PointCloud2
+
+#include "tf2_ros/transform_broadcaster.h"  // tf2_ros::TransformBroadcaster
+
+using geometry_msgs::msg::TransformStamped;
 using pcl_utility_msgs::srv::PCLTransformPointCloud;
 using sensor_msgs::msg::PointCloud2;
-using geometry_msgs::msg::TransformStamped;
 
-constexpr std::chrono::seconds MAX_WAIT_TIME {1U};
+constexpr std::chrono::seconds MAX_WAIT_TIME{1U};
 
 class TestTransformPointCloudNode : public rclcpp::Node
 {
 private:
   tf2_ros::TransformBroadcaster tf_broadcaster_;
-  rclcpp::Client<PCLTransformPointCloud>::SharedPtr
-    transform_point_cloud_client_;
+  rclcpp::Client<PCLTransformPointCloud>::SharedPtr transform_point_cloud_client_;
   rclcpp::Publisher<PointCloud2>::SharedPtr output_publisher_;
   std::string camera_topic_;
   std::string target_frame_name_;
@@ -63,11 +65,9 @@ public:
     source_frame_name_ = declare_parameter<std::string>("source_frame_name");
     camera_topic_ = declare_parameter<std::string>("point_cloud_topic");
 
-    transform_point_cloud_client_ =
-      create_client<PCLTransformPointCloud>(client_topic);
+    transform_point_cloud_client_ = create_client<PCLTransformPointCloud>(client_topic);
 
-    output_publisher_ = create_publisher<PointCloud2>(
-      "transform_point_cloud/cloud_transformed", 1);
+    output_publisher_ = create_publisher<PointCloud2>("transform_point_cloud/cloud_transformed", 1);
 
     target_frame_name_ = std::string(get_name()) + "_tf_frame";
   }
@@ -77,13 +77,11 @@ public:
     while (rclcpp::ok()) {
       PointCloud2 point_cloud_message;
       bool was_retrieved = rclcpp::wait_for_message(
-        point_cloud_message, shared_from_this(),
-        camera_topic_, MAX_WAIT_TIME);
+        point_cloud_message, shared_from_this(), camera_topic_, MAX_WAIT_TIME);
 
       if (!was_retrieved) {
         RCLCPP_ERROR_STREAM(
-          get_logger(),
-          "A camera message could not be retrieved within 1 second.");
+          get_logger(), "A camera message could not be retrieved within 1 second.");
         continue;
       }
 
@@ -108,19 +106,17 @@ public:
     request->target_frame = target_frame_name_;
     request->cloud_in = point_cloud;
 
-    auto response_future =
-      transform_point_cloud_client_->async_send_request(request);
+    auto response_future = transform_point_cloud_client_->async_send_request(request);
 
-    auto response_code = rclcpp::spin_until_future_complete(
-      shared_from_this(), response_future, MAX_WAIT_TIME);
+    auto response_code =
+      rclcpp::spin_until_future_complete(shared_from_this(), response_future, MAX_WAIT_TIME);
 
     if (response_code != rclcpp::FutureReturnCode::SUCCESS) {
       RCLCPP_ERROR_STREAM(get_logger(), "Failed to recieve a response from the service");
       return;
     }
 
-    PCLTransformPointCloud::Response::SharedPtr response {
-      response_future.get()};
+    PCLTransformPointCloud::Response::SharedPtr response{response_future.get()};
     output_publisher_->publish(response->cloud_out);
   }
 };

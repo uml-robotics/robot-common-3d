@@ -1,7 +1,7 @@
 <launch>
     <node
         pkg="pcl_utilities"
-        exec="concatenate_point_cloud_service"
+        exec="concatenate_point_cloud"
         name="concatenate_point_cloud"
         namespace="robot_common_3d/pcl_utilities"
         output="screen"
