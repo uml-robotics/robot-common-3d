@@ -70,7 +70,7 @@ endif()
 #[[ ---*---*--- Add Sanitizers ---*---*---
 In order to use these sanitizers for testing, apply the following steps:
   - These are for DEBUGGING only, never use for hardening a binary (except for
-    safe-stack, cfi, and )
+    safe-stack, cfi, and scudo)
   - Asan and Tsan cannot be used together
   - If using Asan, also add `-U__ADDRESS_SANITIZER__`, Eigen changes its
     allocation scheme if Asan is in use, which creates conflicts with PCL
@@ -100,6 +100,8 @@ find-bugs-quickly-using-sanitizers-with-oneapi-compiler.html
     Lsan: https://github.com/google/sanitizers/wiki/AddressSanitizerLeakSanitizer
     Ubsan: https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
     Tsan: https://github.com/google/sanitizers/wiki/threadsanitizercppmanual
+
+The below shows adding sanitizers per project source, specify `CXXFLAGS` for global changes.
 ]]
 # if (IS_COMPILER_CXX_GNU OR IS_COMPILER_CXX_CLANG)
 #   message("Building \"${PROJECT_NAME}\" with sanitizers")
